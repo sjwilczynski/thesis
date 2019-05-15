@@ -1,0 +1,143 @@
+\documentclass[12pt, wide]{mwart}
+\usepackage[utf8]{inputenc}  
+\usepackage[english]{babel}
+\usepackage{graphicx}    
+\usepackage{epstopdf}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
+\usepackage{bbm}  
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage{array}
+\usepackage{algorithm}
+\setlength\extrarowheight{3pt}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newtheorem{lem}{Lemma}
+
+\usepackage{afterpage}
+
+\newcommand\blankpage{%
+    \null
+    \thispagestyle{empty}%
+    \newpage}
+
+
+\begin{document}
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\textbf{\large University of Wrocław \\Faculty of Mathematics and Computer Science\\ Institute of Computer Science}\\
+\textit{\large  Computer Science}\\
+\vspace{4cm}
+\textbf{\textit{\large Stanisław Wilczyński}\\
+\vspace{0.5cm}
+{\Large Reduction of dimensionality in the analysis of gene expression data}}\\
+\end{center}
+\vspace{3cm}
+\begin{center}
+
+\large {Master thesis\\
+under supervision of\\
+Professor Jan Chorowski\\}
+
+\end{center}
+
+\vfill
+\begin{center}
+\large Wrocław 2019\\
+\end{center}
+
+\afterpage{\blankpage}
+\newpage
+\tableofcontents    
+\section{Introduction}
+
+\subsection{Overview}
+One of the major problems of modern medical studies is the prediction of future metastases of breast cancer diagnosed patients. Although metastases are the main cause of death of such patients and despite the effort in uncovering the underlying mechanism, there was only a minimal improvement in the field in recent years. According to \cite{Metastasis1} the distinction between 'poor prognosis' (developing distant metastasis within 5 years since first tumor appearance) and 'good prognosis' could reduce the number of patients unnecessarily receiving chemotherapy. Data mining seems to be a great candidate for automating the process of such diagnosis as it could allow to predict the outcome of the disease based on hidden, almost impossible to detect correlation or dependencies within the data. One of the most appealing candidate for highly informative data is gene expression data collected from the tumor cells. There are numerous examples of such data proving to be useful in tumor classification (\cite{BreastCancerClassification}, \cite{TumorMolecularClass}, \cite{TumorsClass1}, \cite{TumorClass2}). Unfortunately, the analysis of gene expression data can be problematic, due to the number of features (measurements of expressed genes) being much higher than the number of samples (patients), as the extraction of gene expression data is costly. Such relation causes a phenomenon called 'curse of dimensionality' (\cite[p. 22-26]{ESL2}. In order to decrease this effect the dimensionality reduction techniques are often applied (\cite{MasterArts}, \cite{TumorClass4}, \cite{TumorPLS}). Such reduction allows to even use the one of the most popular and state-of-the-art techniques such as neural network (\cite{fDNN}), which does not work in the settings where number of features is significantly higher than number of samples. Another important techniques are building a sparse representation (\cite{TumorClass3}) or using strong regularization (\cite[p. 649-666]{ESL2}) in constructed models. However, in scope of prediction of metastases data-mining methods are not so popular. In fact, current studies mostly focus on purely biological markers (\cite{Metastasis4}) use prior knowledge based on protein-protein interaction networks (\cite{MetastasisScores}) or operate on very small samples (less than $100$ patients) and use only basic classification methods (\cite{Metastasis1}, \cite{Metastasis2}). Such reluctance to adopt more advanced models is usually caused by the requirement of having a model which can be easy to interpret. In terms of gene expression data it refers to being able to point out the genes having the highest influence on the response. In this thesis, we focus on comparing different classification, dimensionality reduction or feature selection/extraction methods in order to find the ones applicable in the field of prediction of future metastases of breast cancer diagnosed patients. We use a gene expression data set consisting of $969$ for who $12169$ genes expression levels were measured.
+
+\subsection{Contribution}
+
+In this thesis we present different classification and dimensionality reduction methods, discuss their advantages and weaknesses and apply them to our gene expression data. The main contribution is showing how this methods could help in providing automatic diagnosis and deciding about potential highly toxical treatment and that previously used methods are outperformed by our framework.   
+
+\subsection{Outline}
+In section 2 we explain the medical notions in the simplified form to make it understandable for a person with very little biological knowledge. In section 3 we discuss the methods used for classification and dimensionality reduction. In section 4 we statistically and graphically inspect our data set. In section 5 we present the results of our analysis and discuss them. In section 6 we consider the medical applications and show how specific requirements in the field implies some tuning of our models. In section 7 conclusions are presented.
+
+\noindent
+
+\section{Gene expression data}
+
+\begin{itemize}
+    \item Cell, DNA, nucleotide
+    \item DNA sequence, genome
+\end{itemize}
+
+\section{Methods}
+
+\subsection{Classification}
+
+\begin{enumerate}
+    \item Remember to discuss why LR doesn't work in the setting where n < p. \url{https://stats.stackexchange.com/questions/139353/why-does-logistic-regression-not-work-in-p-n-setting}
+    \item Random forest
+    \item SVM(?)
+    \item LDA(?)
+    \item Baseline methods from ESLII(?)
+\end{enumerate}
+
+\subsection{Dimensionality reduction}
+
+\begin{itemize}
+    \item Main
+    \begin{itemize}
+        \item PCA
+        \item SPCA
+        \item Nature paper
+        \item MLCC
+        \item PLS
+    \end{itemize}
+    \item Secondary
+    \begin{itemize}
+        \item Isomap, LLE
+    \end{itemize}
+\end{itemize}
+
+
+\section{Dataset insight}
+
+\begin{itemize}
+    \item Description
+    \item Basic statistics
+    \item Normalization
+\end{itemize}
+
+\section{Classification results}
+
+\subsection{Scoring}
+
+\begin{itemize}
+    \item ROC
+    \item Preference of recall over ROC  - maybe move to applications section
+    \item Confusion matrix(?)
+\end{itemize}
+
+\subsection{Results}
+
+
+\section{Applications in medicine}
+
+\begin{itemize}
+    \item What is acceptable in medicine
+    \item Not liking black box models
+    \item Linear vs nonlinear
+    \item Feature extraction vs feature selection
+    \item pathway enrichment
+\end{itemize}
+
+\section{Conclusion}
+
+\bibliography{biblio}
+\bibliographystyle{apalike}
+
+
+\end{document}
