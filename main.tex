@@ -35,7 +35,7 @@
 \vspace{4cm}
 \textbf{\textit{\large Stanisław Wilczyński}\\
 \vspace{0.5cm}
-{\Large Reduction of dimensionality in the analysis of gene expression data}}\\
+{\Large High dimensional data analysis in prediction of breast cancer metastasis}}\\
 \end{center}
 \vspace{3cm}
 \begin{center}
@@ -61,7 +61,7 @@ One of the major problems of modern medical studies is the prediction of future 
 
 \subsection{Contribution}
 
-In this thesis we present different classification and dimensionality reduction methods, discuss their advantages and weaknesses and apply them to the gene expression data. The main contribution is showing how this methods could help in providing automatic diagnosis and deciding about potential highly toxic treatment. Moreover, we show that previously used methods are outperformed by our framework.   
+In this thesis we present different classification and dimensionality reduction methods, discuss their advantages and weaknesses and apply them to the gene expression data. The main contribution is showing how this methods could help in providing automatic diagnosis and deciding about potential highly toxic treatment. Moreover, we show that previously used methods are outperformed by our framework. The code for all the experiments performed in this thesis is available at \url{github.com/sjwilczynski/geneExpr}.  
 
 \subsection{Outline}
 In section 2 we explain the medical notions in the simplified form to make it understandable for a person with very little biological knowledge. In section 3 we discuss the methods used for classification and dimensionality reduction. In section 4 we statistically and graphically inspect our data set. In section 5 we present the results of our analysis and discuss them. In section 6 we consider the medical applications and show how specific requirements in the field implies some tuning of our models. In section 7 conclusions are presented.
@@ -77,6 +77,8 @@ In this section we briefly explain biological notions used throughout the thesis
 A tumor is a mass formed by a group of abnormal cells. This abnormality refer to disruption in the process of division and apoptosis. However, not all tumors are cancerous. The cancerous tumors (referred as malignant) are characterized by uncontrolled growth and division that leads to damaging nearby tissues. The process of spreading cancerous cell from primary source to other parts of body is called metastasis. Simplifying, it can be described as partial detachment of the tumor its transport with blood to other part of the organism Such secondary pathological sites are called metastases and are particularly dangerous. The gene expression data is of great interest in cancer related research as the alteration of cancerous cell division pattern is usually caused by either a mutation in a set of genes or a change in expression level and in consequence amount of proteins produced. 
 
 \section{Methods}
+
+\subsection{Curse of dimensionality}\label{section:curse}
 
 \subsection{Classification}
 
@@ -111,10 +113,10 @@ A tumor is a mass formed by a group of abnormal cells. This abnormality refer to
 
 \section{Data set insight}
 
-In this section we give a detailed description of our data set and present the results of exploratory analysis. The data set consists of 969 patients. Each patient is represented by the expression level from his cancerous cell. Such cell has its unique identifier (e.g \textit{GSM177885}) referring to Gene Expression Omnibus (\cite{GEO}). Gene Expression Omnibus is public database storing various forms of high-throughput functional genomic data. The repository is maintained by US organization National Center for Biotechnology Information and the data is uploaded and reviewed by scientific community. The \textit{GSM} prefix indicates that this identifiers corresponds to a single sample/cell. Other prefixes refer to series of data gathered within the same conditions (\textit{GSE}), platform (specific micorarray technology) used to perform the experiment (\textit{GPL}), collections of samples assembled by GEO staff (\textit{GDS}). In case of our data set, it was retrieved from \textcolor{blue}{tutaj info od Gregory'ego}. It was preprocessed and normalized which resulted in $12179$ variables measured in each sample. Each variable correspond to a level of expression of a specific gene (e.g. RPL41). 
+In this section we give a detailed description of our data set and present the results of exploratory analysis. The data set consists of 969 patients. Each patient is represented by the expression level from his cancerous cell. Such cell has its unique identifier (e.g \textit{GSM177885}) referring to Gene Expression Omnibus (\cite{GEO}). Gene Expression Omnibus is public database storing various forms of high-throughput functional genomic data. The repository is maintained by US organization National Center for Biotechnology Information and the data is uploaded and reviewed by scientific community. The \textit{GSM} prefix indicates that this identifiers corresponds to a single sample/cell. Other prefixes refer to series of data gathered within the same conditions (\textit{GSE}), platform (specific micorarray technology) used to perform the experiment (\textit{GPL}), collections of samples assembled by GEO staff (\textit{GDS}). In case of our data set, it was retrieved from \textcolor{blue}{tutaj info od Gregory'ego}. It was preprocessed and normalized which resulted in $12179$ variables measured in each sample. Each variable correspond to a level of expression of a specific gene (e.g. RPL41). Each patient is also labeled. Label $1$ corresponds to people who had metastatic event within 5 years from being cancer diagnosed. $0$ corresponds to people who had the first follow up after $5$ years or no metastasis at all. There are $393$ and $576$ samples with labels $1$ and $0$ respectively.   
 
 
-Although preprocessing has already been applied to our data, exploratory analysis should be performed to get a deeper understanding of the data. It involves analyzing main statistical characteristics, study of missing values and outliers, visualization, feature removal and normalization. Due to earlier preprocessing, we expect our variables to follow normal distribution and to be standardized. To assess accuracy of this statements we plot values of four common statistics: mean, standard deviation, skewnees and kurtosis. Skewness measures the asymmetry of the distribution and is equal to the third standardized moment, whereas kurtosis corresponds to the heaviness of the tails of the distribution and is equal to fourth standardized moment. High kurtosis indicates heavy tails or outliers when calculated from sample. For normal distribution skewness and kurtosis are $0$ and $3$ respectively. Below are the mathematical formulas for these statistics:
+Although preprocessing has already been applied, exploratory analysis should be performed to get a deeper understanding of the data. It involves analyzing main statistical characteristics, study of missing values and outliers, visualization, feature removal and normalization. Due to earlier preprocessing, we expect our variables to follow normal distribution and to be standardized. To assess accuracy of this statements we plot values of four common statistics: mean, standard deviation, skewnees and kurtosis. Skewness measures the asymmetry of the distribution and is equal to the third standardized moment, whereas kurtosis corresponds to the heaviness of the tails of the distribution and is equal to fourth standardized moment. High kurtosis indicates heavy tails or outliers when calculated from sample. For normal distribution skewness and kurtosis are $0$ and $3$ respectively. Below are the mathematical formulas for these statistics:
 \begin{align}
     Skew[X] = E\left[\left(\frac{X-\mu}{\sigma}\right)^3 \right] \nonumber \\
     Kurt[X] = E\left[\left(\frac{X-\mu}{\sigma}\right)^4 \right] \nonumber
@@ -128,9 +130,7 @@ In the code we use \textit{scipy.stats.kurtosis} to calculate the kurtosis which
 \label{fig:stats}
 \end{figure}
 
-On the figure \ref{fig:stats} we can see that the data is not standardized. The variables are sorted decreasingly by means varying from $6.01$ to $13.79$. Also standard deviations vary from $0.07$ to $2.41$. Therefore, before applying any dimensionality reduction method we should standardize our data, e.g in PCA the variance explained by a variable hugely depends on its scale and could lack of standardization could lead to over or underestimation of its effect. Skewness and kurtosis evidence against our normality assumption.
-
-They vary from $-2.99$ to $13.10$ and $-1.38$ to $282.88$ respectively. Especially, the kurtosis implies presence of outliers. In order to get more insight on the distribution of our variables in figure \ref{fig:hists_out} we plot the histogram and boxplots of genes with maximum skewness and kurtosis and in figure \ref{fig:hists_norm} we plot histograms and boxplots of randomly chosen genes from the data. 
+On the figure \ref{fig:stats} we can see that the data is not standardized. The variables are sorted decreasingly by means varying from $6.01$ to $13.79$. Also standard deviations vary from $0.07$ to $2.41$. Therefore, before applying any dimensionality reduction method we should standardize our data, e.g in PCA the variance explained by a variable hugely depends on its scale and could lack of standardization could lead to over or underestimation of its effect. Skewness and kurtosis evidence against our normality assumption. They vary from $-2.99$ to $13.10$ and $-1.38$ to $282.88$ respectively. Especially, the kurtosis implies presence of outliers. In order to get more insight on the distribution of our variables in figure \ref{fig:hists_out} we plot the histogram and boxplots of genes with maximum skewness and kurtosis and in figure \ref{fig:hists_norm} we plot histograms and boxplots of randomly chosen genes from the data. 
 
 \begin{figure}
 \centering
@@ -147,7 +147,7 @@ They vary from $-2.99$ to $13.10$ and $-1.38$ to $282.88$ respectively. Especial
 \end{figure}
 
 
-By looking at the figure \ref{fig:hists_norm} we conclude that also the distribution are visibly skewed and even multimodal they do not indicate that further transformation is needed to able to use models assuming normality. However, we can clearly see form figure \ref{fig:hists_out} that high skewness or kurtosis can be caused by outlying values for this variable. In order to verify this we calculate the 95\% quantile for both skewness and kurtosis. They are equal to $2.15$ and $9.77$ respectively. It indicates that only very few genes have statistics indicating non normality. What is more, the number of genes with kurtosis or skewness above 95\% quantile is $710$ which is not significantly larger than the number of genes with high kurtosis only. This indicates that the extreme values of either of these statistics appear on the small subset of genes. In order to assess the influence of such genes we consider following data sets: data set consisting of genes only with values of skewness and kurtosis below the 95\% quantile ($D_1$), the complement of the previous data set ($D_2$), $50$ data sets extracted by randomly choosing $710$ variables from the original data ($D_{random}$). \textcolor{blue}{Wstawiać wykresy czy tylko score'y?} We split each of them to train and test parts and fit logistic regression with L1 penalty and regularization hyperparameter chosen using cross validation as described in section \ref{section:hypers}. We compare the scores on the test set (section \ref{section:scores}) to check how these genes with outlying values impact our prediction. For the random data sets we fit the model for each of them and take the mean scores. The results are presented in the table below: 
+By looking at the figure \ref{fig:hists_norm} we conclude that also the distribution are visibly skewed and even multimodal they do not indicate that further transformation is needed to able to use models assuming normality. However, we can clearly see form figure \ref{fig:hists_out} that high skewness or kurtosis can be caused by outlying values for this variable. In order to verify this we calculate the 95\% quantile for both skewness and kurtosis. They are equal to $2.15$ and $9.77$ respectively. It indicates that only very few genes have statistics indicating strong non normality. What is more, the number of genes with kurtosis or skewness above 95\% quantile is $710$ which is not significantly larger than the number of genes with high kurtosis only. This indicates that the extreme values of either of these statistics appear on the small subset of genes. In order to assess the influence of such genes we consider following data sets: data set consisting of genes only with values of skewness and kurtosis below the 95\% quantile ($D_1$), the complement of the previous data set ($D_2$), $50$ data sets extracted by randomly choosing $710$ variables from the original data ($D_{random}$). We split each of them to train and test parts and fit logistic regression with L1 penalty and regularization hyperparameter chosen using cross validation as described in section \ref{section:hypers}. We compare the scores on the test set (section \ref{section:scores}) to check how these genes with outlying values impact our prediction. For the random data sets we fit the model for each of them and take the mean scores. The results are presented in the table below: 
 \begin{table}[H]
 \centering
     \begin{tabular}[t]{c c c c c}
@@ -163,14 +163,39 @@ By looking at the figure \ref{fig:hists_norm} we conclude that also the distribu
     \label{tab:scores-trunc}
 \end{table}
 
-From this table we can clearly see that the genes in $D_2$ do not have big predictive power. The mean scores from $D_{random}$ are higher for every considered metric. It is also worth noting that randomly chosen variables bring less information for prediction than all the genes in $D_1$, especially in terms of recall. The next step is checking how these genes with extreme values impact prediction.
+From this table we can clearly see that the genes in $D_2$ do not have big predictive power. The mean scores from $D_{random}$ are higher for every considered metric. It is also worth noting that randomly chosen variables bring less information for prediction than all the genes in $D_1$. The next step is checking how these genes with extreme values impact stability of our classifier.
 
-\begin{itemize}
-    \item Description
-    \item Basic statistics
-    \item Normalization
-    \item Heatmap
-\end{itemize}
+In order to check it we use six different transformations on the data, then fit logistic regression model with L1 penalty and the same regularization parameter. We choose this classifier because its weights are sensitive to outliers and could easily indicate the impact of genes with extreme values. 
+The compared transformations are:
+
+\begin{enumerate}
+    \item No transformation
+    \item Standardization - from each variable we subtract its mean and divide by standard deviation
+    \item Quantile transformation to normal distribution - for each variable we calculate the empirical cumulative density function (CDF) and use it to project original data. The projected data is truncated to $10^{-7}$ and $1-10^{-7}$ then transformed using inverse CDF of normal distribution. The formula is $y_{i}=\Phi^{-1}\left(F\left(x_{i}\right)\right),$ where $F$ and $\Phi$ represent empirical CDF and normal distribution CDF respectively. This transformation is more robust to outliers than scaling but may deform distances within and across features.
+    \item Quantile transformation to uniform distribution - similar to the previous one but we transform data to match uniform distribution. We use it to check how the weights of logistic regression will be affected when unreasonable transformation is applied to our data.
+    \item Truncating most extreme values - for each feature we calculate 1\% ($q_1$) and 99\% ($q_{99}$) quantiles and replace values smaller then $q_1$ with $q_1$ and values greater then $q_{99}$ with $q_{99}$
+    \item Quartile standardization - for each variable we subtract its median and divide by inter quartile range which is equal to difference between 75\% quantile and 25\% quantile
+\end{enumerate}
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{images/normalization_coeffs.png}
+\caption{Weights of logistic regression with different data transformations}
+\label{fig:normalization}
+\end{figure}
+
+The plots of the weights of these classifiers are presented on figure \ref{fig:normalization}. We can see that the difference between no transformation and truncating extreme ($4$-th plot in the first column) values is very small. It indicates that these genes with very high skewness and kurtosis do not impact our prediction significantly and do not need to be truncated or removed from the data. What is more application of different transformation aiming to normalize our features (plots $4-6$-th in the second column) resulted in similar logistic regression coefficients. Taking into account figure \ref{fig:hists_norm} and \ref{fig:normalization} we conclude that there is no justification of using further transformation of our data set before further analysis. We will only standardize the data before applying dimensionality reduction methods as they are sensitive to features' scales.
+
+In data mining we usually aim to remove strongly correlated variables from the data, due to the possibility of causing instability in our models (\cite{Correlation}). In case of gene expression data this usually refers to genes which are co-regulated and involved in the same genetic pathway. In order to get notion of such correlation structure we present (figure \ref{fig:heatmap}) the correlation between randomly chosen $50$ genes. 
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{images/heatmap.png}
+\caption{Correlation of randomly chosen subset of $50$ genes}
+\label{fig:heatmap}
+\end{figure}
+
+Although most variables seem to have correlation close to $0$ we can clearly see some significant ones, even though we chosen randomly only $0.41$\% of our variables. This correlation matrix strongly indicates that dimensionality reduction methods (both feature selection and extraction) can be exploited on our data.
 
 \section{Results}
 
