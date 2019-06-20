@@ -83,29 +83,69 @@ The data set consists of $969$ patients. Each patient is represented by the arra
 
 \subsection{Background and challenges} \label{section:challenges}
 
-As stated in the introduction our aim is prediction of future metastases which in terms of our data translates to binary classification problem using the labels. There are numerous examples where classification methods allow to solve very complex problems e.g customer target marketing, document categorization and filtering or computer vision (\cite{dataClassification}). However, in the field of biomedical data not all of them are applicable in our setting. The reason is the high dimensional, complex structure of our data, particularly the relation between the number of samples and number of features: $n \ll p$. As mentioned in the section \ref{section:bio} such relation is caused by the relatively low availability of samples and high costs of extracting, processing and labeling new ones. These activities have to be done in laboratory by professionals, in comparison to creation of data sets containing images where anyone can participate in e.g paid labelling procedure. Apart from that huge number of features causes a phenomenon called \textit{curse of dimensionality}. As described in \cite{ISL} the increase in the number of variables can improve the model only if the added features are signals - associated with the response. On the other hand, if they do not influence the response at all, they introduce noise. This may lead to overfitting and significantly larger test error (more details in section \ref{section:selection}). The source of this problem is that with increasing dimension the sample space become very sparse and all pairwise distances between data points are alike. Furthermore, huge number of variables introduces more complexity in most models as the number of parameters to estimate grows. In extreme cases it may even lead to lack of convergence in parameter estimation and in consequence lack of model stability. In order to tackle this issue we will use regularized models and dimensionality reduction procedures described in further chapters.
+As stated in the introduction our aim is prediction of future metastases which in terms of our data translates to binary classification problem using the labels. There are numerous examples where classification methods allow to solve very complex problems e.g customer target marketing, document categorization and filtering or computer vision (\cite{dataClassification}). However, in the field of biomedical data not all of them are applicable in our setting. The reason is the high dimensional, complex structure of our data, particularly the relation between the number of samples and number of features: $n \ll p$. As mentioned in the section \ref{section:bio} such relation is caused by the relatively low availability of samples and high costs of extracting, processing and labeling new ones. These activities have to be done in laboratory by professionals, in comparison to creation of data sets containing images where anyone can participate in e.g paid labelling procedure. Apart from that huge number of features causes a phenomenon called \textit{curse of dimensionality}. As described in \cite{ISL} the increase in the number of variables can improve the model only if the added features are signals - associated with the response. On the other hand, if they do not influence the response at all, they introduce noise. This may lead to overfitting and significantly larger test error (more details in section \ref{section:selection}). The source of this problem is that with increasing dimension the sample space become very sparse and all pairwise distances between data points are alike. Furthermore, huge number of variables introduces more complexity in most models as the number of parameters to estimate grows. In extreme cases it may even lead to lack of convergence in parameter estimation and in consequence lack of model stability. In order to tackle this issue we will use robust classifiers and dimensionality reduction procedures described in further chapters.
 
-\subsection{Regularized methods}
+\subsection{Classifiers for high dimensional data}
 
-\begin{itemize}
-    
-    \item L1 and L2 - its connection with prior distributions (as in PGM)
-    \item LR + ElasticNet - Remember to discuss why LR doesn't work in the setting where $n << p$. \textcolor{blue}{\href{https://stats.stackexchange.com/questions/139353/why-does-logistic-regression-not-work-in-p-n-setting}{link}}
-    \item Random forest
-    \item linearSVM
-    \item RandomLogisticRegressions
-    \item Baseline methods from ESLII: LDA + NearestShrunkenCentroid
-\end{itemize}
+\subsubsection{Logistic regression and its modifications}
+
+One of the most popular and simple classifiers for binary response is logistic regression (LR). It is a counterpart of linear regression for regression problems and was proven to be valuable method for microarray analysis (\cite{LRgene}). The model aims at estimating the conditional probability of class membership. It is described by the following formula:
+\begin{align*}
+    &P(y=1 | x, \beta)=\sigma\left(\beta^{T} x\right) \\
+    &\sigma(t) = \frac{1}{1+e^{-t}} \\
+    &x=(1, x_1, \ldots, x_p) \\
+    &\beta = (\beta_0, \ldots, \beta_p)
+\end{align*}
+where $x$ is the vector of features, $\beta$ is the vector of coefficients including intercept, $\sigma$ is sigmoid function and is used to squeeze the output to range $(0,1)$ and P is the conditional probability of class $1$ a sample described by variables $x$. The interpretation of logistic regression coefficients is quite different than linear regression due to the usage of sigmoid function. In terms of the latter one an increase of one unit of variable $x_i$ corresponds to increase of the output by $\beta_i$. The similar relation for LR can be expressed using log odds (the ratio of probabilities of event occurring and not occurring):
+
+\begin{align*}
+    \log \left(\frac{P(y=1| x, \beta)}{1-P(y=1| x, \beta)}\right)=\log \left(\frac{P(y=1| x, \beta)}{P(y=0| x, \beta)}\right)=\beta_{0}+\beta_{1} x_{1}+\ldots+\beta_{p} x_{p}
+\end{align*}
+
+Above equation clearly indicates that an increase of one unit of variable $x_i$ corresponds to increase of the log odds by $\beta_i$ and this implies and increase of odds ratio by a factor of $\exp(\beta_i)$. Similarly $\beta_0$ corresponds to the log odds in the baseline conditions. Such relatively simple and probabilistic interpretation made the model very popular. However, it has some disadvantages. First of all, it does not incorporate a possibly complicated correlation structure or interactions between variables. Secondly, it could perform worse with highly correlated features or features having no influence on response and coefficients could be infinite in case of occurrence of complete separation, i.e when one feature can distinguish completely between classes. Nonetheless, LR is widely used, also due to uncomplicated learning scheme. Similarly to linear regression coefficients in LR are calculated using maximum likelihood estimation. The likelihood function takes the form:
+\begin{align*}
+    L(\beta) = \prod_{i=1}^n P(Y=y_i | x_i, \beta) &= \prod_{i=1}^n P(Y=1 | x_i ; \beta)^{y_i}(1-P(Y=1 | x_i ; \beta))^{\left(1-y_i\right)} \\
+&= \prod_{i=1}^n \sigma\left(\beta^{T} x_i\right)^{y_i}\left(1-\sigma\left(\beta^{T} x_i\right)\right)^{\left(1-y_i\right)}
+\end{align*}
+And the negative log likelihood is:
+\begin{align*}
+    nll(\beta)=-\sum_{i=1}^{n} y_i \log \sigma\left(\beta^{T} x_i\right)+\left(1-y_i\right) \log \left(1-\sigma\left(\beta^{T} x_i\right)\right)
+\end{align*}
+
+In the two above equations $x_1, \ldots x_n$ denote samples and $y_i$ corresponding labels. In order to maximize the coefficients we calculate the first derivative of the negative log likelihood function as in \cite[chapter 4.4.1]{ESL2}:
+\begin{align*}
+    \frac{\partial nll(\beta)}{\partial \beta}&=\sum_{i=1}^{n}\left(\sigma\left(\beta^{T} x_i\right)-y_i\right) x_i\\ &=
+    \left[\left(\sigma(X\beta) - Y\right)^TX\right]^T
+\end{align*}
+We can clearly see that the right side is not linear in $\beta$ and in fact equation $\frac{\partial nll(\beta)}{\partial \beta} = 0$ cannot be solved analytically. Therefore, the maximizing coefficients are found using Newton-Raphson method, extensions of gradient descent like SAG (\cite{sag}) or SAGA (\cite{saga}) and other e.g. Liblinear (\cite{liblinear}). 
+
+However, classic logistic regression has one more drawback. Without any constraints in order to fit $p+1$ we need at least $p+1$, otherwise there are infinitely many solutions. For our data set $n \ll p$ and LR cannot work in such settings. Therefore, additional restriction is introduced to our model which is regularization. 
+
+
+
+%Remember to discuss why LR doesn't work in the setting where $n << p$. \textcolor{blue}{\href{https://stats.stackexchange.com/questions/139353/why-does-logistic-regression-not-work-in-p-n-setting}{link}}
+
+L1 and L2 - its connection with prior distributions (as in PGM)
+
+\subsubsection{Linear Discriminant Analysis and Nearest Shrunken Centroid}
+
+\subsubsection{Linear Support Vector Machines}
+
+\subsubsection{Ensemble models}
+
+Random forest, random logistic regressions
+
 
 \subsection{Dimensionality reduction}
 
-\begin{itemize}
-        \item PCA
-        \item SPCA
-        \item fDNN (Nature papaer)
-        \item MLCC
-        \item PLS
-\end{itemize}
+\subsubsection{PCA and SPCA}
+
+\subsubsection{Partial Least Squared}
+
+\subsubsection{Forest Deep Neural Network}
+
+\subsubsection{Multiple Latent Components Clustering}
+
 
 \subsection{Model assessment and selection} \label{section:selection}
 
