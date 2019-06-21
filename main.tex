@@ -16,6 +16,7 @@
 \setlength\extrarowheight{3pt}
 
 \DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
 \newtheorem{lem}{Lemma}
 
 \usepackage{afterpage}
@@ -104,7 +105,7 @@ where $x$ is the vector of features, $\beta$ is the vector of coefficients inclu
 
 Above equation clearly indicates that an increase of one unit of variable $x_i$ corresponds to increase of the log odds by $\beta_i$ and this implies and increase of odds ratio by a factor of $\exp(\beta_i)$. Similarly $\beta_0$ corresponds to the log odds in the baseline conditions. Such relatively simple and probabilistic interpretation made the model very popular. However, it has some disadvantages. First of all, it does not incorporate a possibly complicated correlation structure or interactions between variables. Secondly, it could perform worse with highly correlated features or features having no influence on response and coefficients could be infinite in case of occurrence of complete separation, i.e when one feature can distinguish completely between classes. Nonetheless, LR is widely used, also due to uncomplicated learning scheme. Similarly to linear regression coefficients in LR are calculated using maximum likelihood estimation. The likelihood function takes the form:
 \begin{align*}
-    L(\beta) = \prod_{i=1}^n P(Y=y_i | x_i, \beta) &= \prod_{i=1}^n P(Y=1 | x_i ; \beta)^{y_i}(1-P(Y=1 | x_i ; \beta))^{\left(1-y_i\right)} \\
+    L(\beta) &= \prod_{i=1}^n P(Y=y_i | x_i, \beta) \\&= \prod_{i=1}^n P(Y=1 | x_i ; \beta)^{y_i}(1-P(Y=1 | x_i ; \beta))^{\left(1-y_i\right)} \\
 &= \prod_{i=1}^n \sigma\left(\beta^{T} x_i\right)^{y_i}\left(1-\sigma\left(\beta^{T} x_i\right)\right)^{\left(1-y_i\right)}
 \end{align*}
 And the negative log likelihood is:
@@ -121,13 +122,100 @@ We can clearly see that the right side is not linear in $\beta$ and in fact equa
 
 However, classic logistic regression has one more drawback. Without any constraints in order to fit $p+1$ we need at least $p+1$, otherwise there are infinitely many solutions. For our data set $n \ll p$ and LR cannot work in such settings. Therefore, additional restriction is introduced to our model which is regularization. 
 
+The maximization of likelihood function usually provides good (in terms of model usability) estimates of the model parameters. However such estimation may cause trouble when the number of data samples is relatively small. In order to tackle this problem we consider a more probabilistic (Bayesian) point of view - instead of maximizing the likelihood, we will maximize posterior probability of model parameters:
 
+\begin{align}
+    P(\beta| X,Y) &= \frac{P(Y | \beta, X)P(\beta)}{P(Y)} \nonumber \\
+    \hat{\beta} = \argmax_{\beta} P(\beta| X,Y) &= \argmax_{\beta} P(Y | \beta, X)P(\beta) \label{eq:post}
+\end{align}
+
+The first equation is derived directly from the Bayes rule and we can see that in the equation \ref{eq:post} we neglect the denominator as it is independent of $\beta$. So the first term in the right side of \ref{eq:post} is the likelihood function and the second is the prior distribution over the values of $\beta$. The maximum likelihood estimation is a special case of maximum a posteriori estimation, i.e. when we assume uniform distribution for model parameters.  Choice of MAP estimates over MLE estimates has a significant effect on our learning scheme. Instead of minimizing the negative log likelihood we minimize the expression:
+
+\begin{align}
+    J(\beta) &= - \log P(Y | \beta, X)P(\beta) =  - \log P(Y | \beta, X) - \log P(\beta) \nonumber \\ &= nll(\beta) - \log P(\beta) = nll(\beta) - \sum_{i=0}^p \log P(\beta_i) \label{eq:learnPost}
+\end{align}
+
+Of course $\argmax_{\beta} P(\beta| X,Y) = \argmin_{\beta} J(\beta)$. The above equation indicates that the mentioned influence depends only on the choice of prior distribution for model parameters. Two popular choice are zero-mean normal distribution and zero-mean Laplace distribution:
+\begin{align*}
+    \mathcal{N}(0, \sigma^2) &= \frac{1}{\sqrt{2 \pi \sigma^{2}}} \exp \left(-\frac{x^{2}}{2 \sigma^{2}}\right) \\
+    Lap(0, b) &= \frac{1}{2 b} \exp \left(-\frac{|x|}{b}\right)
+\end{align*}
+
+Putting these two distributions to into \ref{eq:learnPost} gives us following versions of $J$ to minimize:
+\begin{align*}
+    J_{\mathcal{N}}(\beta) &= nll(\beta) + \sum_{i=0}^p -\log \left(\frac{1}{\sqrt{2 \pi \sigma^{2}}} \right) + \frac{\beta_i^{2}}{2 \sigma^{2}} \\
+    J_{L} &= nll(\beta) + \sum_{i=0}^p -\log \left(\frac{1}{2 b} \right) + \frac{|\beta_i|}{b}
+\end{align*}
+We can simplify these equations as constants can be discarded during minimization:
+\begin{align*}
+    \argmin_{\beta} J_{\mathcal{N}}(\beta) &= nll(\beta) + \frac{1}{2 \sigma^2}\sum_{i=0}^p \beta_i^{2} = nll(\beta) + \frac{1}{2 \sigma^2}\| \beta \|_2^2\\ 
+    \argmin_{\beta} J_{L}(\beta) &= nll(\beta) + \frac{1}{b}\sum_{i=0}^p |\beta_i| = nll(\beta) + \frac{1}{b}\| \beta\|_1 
+\end{align*}
+where $||\cdot||_2, ||\cdot||_1$ denote euclidean ($l_2$) and absolute ($l_1$) norms respectively. As we often want to calibrate the effect of regularization of our parameters we rewrite the above to form: 
+
+\begin{align*}
+    \argmin_{\beta} J_{\mathcal{N}}(\beta) &=  nll(\beta) + \frac{\lambda_2}{2}\| \beta \|_2^2\\ 
+    \argmin_{\beta} J_{L}(\beta) &= nll(\beta) + \lambda_1\| \beta\|_1 
+\end{align*}
+
+as increase in either of $\lambda$ magnifies the effect of regularization. This two schemes are called $L_2$ and $L_1$ regularizations respectively and the latter term in both equations is called penalty.
+
+We can see that these two regularizations aim at pushing the coefficients towards zero in order to reduce overfitting and enhance model generalization capabilities. Especially in case of our data, regularization allow us to use LR when $n \ll p$. Yet these two schemes differ considerably. As described in \cite[chapter 13.3.1]{MLprob} the $l_1$ norm favours sparse models (lots of coefficients equal to $0$) and $l_2$ favours models with lots of coefficients having small (but most of the times nonzero) values. The intuition behind this is visible in the formula for the penalty. Consider and example vector $x = (1, \varepsilon)$ where $0 < \varepsilon < 1$. Then the norms are $\|x\|_{1}=1+\varepsilon,  \|x\|_{2}^{2}=1+\varepsilon^{2}$. Now we check how the norms change when we subtract the vectors $(\delta, 0)$ and $(0, \delta)$:
+
+\begin{align*}
+    \|x-(\delta, 0)\|_{1}&=1-\delta+\varepsilon, \ \   \|x-(\delta, 0)\|_{2}^{2}=1-2 \delta+\delta^{2}+\varepsilon^{2} \\ 
+    \|x-(0, \delta)\|_{1}&=1-\delta+\varepsilon, \ \  \|x-(0, \delta)\|_{2}^{2}=1-2 \varepsilon \delta+\delta^{2}+\varepsilon^{2}
+\end{align*}
+
+We can see regularizing the first, larger coordinate in $l_2$ has results in much more significant decrease in norm than doing so for the smaller one. Therefore, it is not very probable that $L_2$ regularization will truncate any tiny coefficients to $0$ as doing so has almost negligible influence on the norm value. In case of $l_1$ the difference in norms is always the same, regardless the actual value of coefficients. That is why $L_1$ regularization is likely to reduce parameters to $0$ if they have minor effects on the likelihood. 
+
+In terms of linear regression these two methods are called ridge regression and LASSO. There also exists a combination of these two i.e. Elastic Net where the penalty is the linear combination of $L_1$ and $L_2$ regularization. As different models can use such regularization in the further chapters we will refer to them as $L_1, L_2$ and Elastic Net penalties.
 
 %Remember to discuss why LR doesn't work in the setting where $n << p$. \textcolor{blue}{\href{https://stats.stackexchange.com/questions/139353/why-does-logistic-regression-not-work-in-p-n-setting}{link}}
 
-L1 and L2 - its connection with prior distributions (as in PGM)
+\subsubsection{Regularized Discriminant Analysis and Nearest Shrunken Centroid}
 
-\subsubsection{Linear Discriminant Analysis and Nearest Shrunken Centroid}
+As stated in \cite[chapter 18.2]{ESL2} there are two good classifiers that can be used as baseline in high dimensional setting. The first one Regularized Discriminant Analysis (RDA), which is an extension of Linear Discriminant Analysis (LDA) (\cite[chapter 4.3]{ESL2}). The assumption of LDA is that samples from each class come from multivariate normal distribution with the same covariance matrix $\Sigma$. In terms of two classes it can be written as:
+\begin{align*}
+    x_i \sim \begin{cases}
+    \mathcal{N}(\mu_0, \Sigma) \text{  if $y_i=0$} \\
+    \mathcal{N}(\mu_1, \Sigma) \text{  if $y_i=1$} \\
+    \end{cases}
+\end{align*}
+where $x_i, y_i$ denotes $i$-th sample and label in the data set respectively. Let us denote corresponding densities as $f_0$ and $f_1$. Assuming a prior probabilities of class membership $\pi_0, \pi_1, \pi_0 + \pi_1=1$ one can look at the log ratio of class membership probabilities for sample $x_i$:
+\begin{align} 
+\log \frac{P(Y=1 | X=x_i)}{P(Y=0 | X=x_i)}&=\log \frac{f_1(x)}{f_{0}(x)}+\log \frac{\pi_1}{\pi_{0}} \nonumber \\&=\log \frac{\pi_1}{\pi_{0}}-\frac{1}{2}\left(\mu_1+\mu_{0}\right)^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) + x^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) \nonumber\\ &= \delta_1(x_i) - \delta_0(x_i) \text{, where} \nonumber\\
+\delta_{k}(x)&=x^{T} \mathbf{\Sigma}^{-1} \mu_{k}-\frac{1}{2} \mu_{k}^{T} \mathbf{\Sigma}^{-1} \mu_{k}+\log \pi_{k} \label{eq:dslda}
+\end{align}
+where $\delta_1, \delta_0$ are discriminant scores for classes $1,0$ respectively. As the values of $\mu_1, \mu_0, \pi_1, \pi_0, \Sigma$ are not known mean sample estimates, class proportions and sample covariance matrix are used. The assumption of equal covariance matrices is why this method is called $linear$. By looking at the ratio of class membership probabilities we can see that quadratic parts from exponent cancelled each other resulting in the decision boundary (set where $P(Y=1 | X=x_i) = P(Y=0 | X=x_i)$ to be linear in $x_i$ - a hyperplane. However, if we assume that the covariance matrices are not equal we get a quadratic decision boundary and a method called Quadratic Discriminant Analysis. However, such formulation results in huge number of parameters as each covariance matrix is of size $p \times p$, which is even a problem in LDA. In order to tackle this issue regularization is introduced to form RDA and the covariance matrix is shrunk towards a diagonal one with $\lambda$ as regularization parameter:
+\begin{align*}
+    \hat{\Sigma}(\lambda)=\lambda \hat{\Sigma}+(1-\lambda) \alpha I
+\end{align*}
+The value of $\lambda$ is chosen using Ledoit-Wolf lemma (\cite{honey}) and $\alpha$ is the average eigenvalue of sample covariance matrix. In summary, RDA is a simple classifier, that uses Mahalanobis metric to measure distances from mean classes and regularized sample covariance matrix. The linear decision boundary is also appealing as it leads to model that is easy to interpret.
+
+
+The other method is Nearest Shrunken Centroid (NSC) classifier, described in \cite{NSC}. It is based on a very simple nearest centroid classifier: we calculate centroid for each class and then assign each sample to a class based on its distances to these centroid, i.e. to the one with the smallest euclidean distance. Such elementary algorithm doesn't work in settings where $n \ll p$, due to the curse of dimensionality as described in \ref{section:challenges}. Therefore within class centroids coordinates are shrunken toward overall feature mean, making the assignment to classes dependent only on a small subset of variables. To formalize this intuition let us denote $x_{ji}$ as the value of $i$-th variable in $j$-th sample where $i=1, \ldots, p$ and $j=1,\ldots,n$. We assume there are $K$ classes and subset of sample indices for each class is $C_k$ . Let $\bar{x_i}$ denote $i$-th feature mean and $\bar{x_{ik}}$ denote $i$-th feature mean within class $k$. Then we can write:
+\begin{align*}
+    \bar{x}_{i k}&=\bar{x}_{i}+m_{k} s_{i} d_{i k} \text{, where} \\
+    d_{i k}&=\frac{\bar{x}_{i k}-\bar{x}_{i}}{m_{k} \cdot s_{i}} \\ 
+    s_{i}^{2}&=\frac{1}{n-K} \sum_{k=1}^{K} \sum_{j \in C_{k}}\left(x_{i j}-\bar{x}_{i k}\right)^{2} \\
+    m_{k}&=\sqrt{1 / n_{k}-1 / n} \\
+\end{align*}
+The shrinkage is applied to $d_{ik}$ creating shrunken centroids $\bar{x_{ik}^{\prime}}$:
+\begin{align*}
+    \bar{x}_{i k}^{\prime}&=\bar{x}_{i}+m_{k} s_{i} d_{i k}^{\prime} \text{, where} \\
+    d_{i k}^{\prime}&=\operatorname{sign}\left(d_{i k}\right)\left(\left|d_{i k}\right|-\Delta\right)_{+}
+\end{align*}
+
+This type of shrinkage is called soft thresholding. The advantage here is that with a proper choice of $\Delta$ parameter most of the coordinates of class centroid are equal to the coordinates of the whole data set centroid, leaving only few coordinates of each $\bar{x}_{i k}^{\prime} - \bar{x}_{i}$ nonzero. Those few values will be the one determining the assignment to classes. In terms of our data it translates to making prediction of metastasis dependent only on few chosen genes. It is very reasonable as in microarray analysis most genes does not differ significantly by expression levels between classes and the variability usually comes from random fluctuation and these method aims at removing the noisy features using soft thresholding.
+
+With a new sample $x^{*}=\left(x_{1}^{*}, x_{2}^{*}, \ldots, x_{p}^{*}\right)$ to classify we choose the class $k$ with the lowest discriminant score, i.e:
+\begin{align}
+\delta_{k}\left(x^{*}\right)=\sum_{i=1}^{p}\frac{\left(x_{i}^{*}-\overline{x}_{ik}^{\prime}\right)^{2}}{s_{i}^{2}}-2 \log \pi_{k} \label{eq:dsnsc}
+\end{align}
+
+The first part of this score corresponds to the normalized distance to shrunken centroid and the second one results from a simple prior distribution put on class assignment where $\pi_{k} = \frac{|C_k|}{n}$. By expanding the square in equation \ref{eq:dsnsc} we could see that discriminant score in NSC is very similar to discriminant score for LDA (as in equation \ref{eq:dslda}). In fact the distinctions are that NSC assumes diagonal covariance matrix and uses shrunken centroids instead of sample means. The first one is particularly useful in high dimensional data as covariance matrix is of size $p \times p$ and may influence the stability of scores calculations and therefore usability of the model.
+
 
 \subsubsection{Linear Support Vector Machines}
 
