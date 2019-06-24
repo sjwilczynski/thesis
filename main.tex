@@ -94,8 +94,8 @@ One of the most popular and simple classifiers for binary response is logistic r
 \begin{align*}
     &P(y=1 | x, \beta)=\sigma\left(\beta^{T} x\right) \\
     &\sigma(t) = \frac{1}{1+e^{-t}} \\
-    &x=(1, x_1, \ldots, x_p) \\
-    &\beta = (\beta_0, \ldots, \beta_p)
+    &x=(1, x_1, \ldots, x_p)^T \\
+    &\beta = (\beta_0, \ldots, \beta_p)^T
 \end{align*}
 where $x$ is the vector of features, $\beta$ is the vector of coefficients including intercept, $\sigma$ is sigmoid function and is used to squeeze the output to range $(0,1)$ and P is the conditional probability of class $1$ a sample described by variables $x$. The interpretation of logistic regression coefficients is quite different than linear regression due to the usage of sigmoid function. In terms of the latter one an increase of one unit of variable $x_i$ corresponds to increase of the output by $\beta_i$. The similar relation for LR can be expressed using log odds (the ratio of probabilities of event occurring and not occurring):
 
@@ -137,8 +137,8 @@ The first equation is derived directly from the Bayes rule and we can see that i
 
 Of course $\argmax_{\beta} P(\beta| X,Y) = \argmin_{\beta} J(\beta)$. The above equation indicates that the mentioned influence depends only on the choice of prior distribution for model parameters. Two popular choice are zero-mean normal distribution and zero-mean Laplace distribution:
 \begin{align*}
-    \mathcal{N}(0, \sigma^2) &= \frac{1}{\sqrt{2 \pi \sigma^{2}}} \exp \left(-\frac{x^{2}}{2 \sigma^{2}}\right) \\
-    Lap(0, b) &= \frac{1}{2 b} \exp \left(-\frac{|x|}{b}\right)
+    \mathcal{N}(0, \sigma^2) &\sim \frac{1}{\sqrt{2 \pi \sigma^{2}}} \exp \left(-\frac{x^{2}}{2 \sigma^{2}}\right) \\
+    Lap(0, b) &\sim \frac{1}{2 b} \exp \left(-\frac{|x|}{b}\right)
 \end{align*}
 
 Putting these two distributions to into \ref{eq:learnPost} gives us following versions of $J$ to minimize:
@@ -158,7 +158,13 @@ where $||\cdot||_2, ||\cdot||_1$ denote euclidean ($l_2$) and absolute ($l_1$) n
     \argmin_{\beta} J_{L}(\beta) &= nll(\beta) + \lambda_1\| \beta\|_1 
 \end{align*}
 
-as increase in either of $\lambda$ magnifies the effect of regularization. This two schemes are called $L_2$ and $L_1$ regularizations respectively and the latter term in both equations is called penalty.
+as increase in either of $\lambda$ magnifies the effect of regularization. This two schemes are called $L_2$ and $L_1$ regularizations. It is also worth noticing that their general structure can be written as:
+
+\begin{align}
+    \hat{\beta} = \argmin_{\beta} \mathcal{L}(X,y, \beta) + \lambda Pen(\beta) \label{eq:loss+pen}
+\end{align}
+
+where the first term is called loss function (in our case negative log likelihood) and the second term is called the penalty, where $\lambda$ is the tuning parameter which controls the magnitude of the effect of regularization.
 
 We can see that these two regularizations aim at pushing the coefficients towards zero in order to reduce overfitting and enhance model generalization capabilities. Especially in case of our data, regularization allow us to use LR when $n \ll p$. Yet these two schemes differ considerably. As described in \cite[chapter 13.3.1]{MLprob} the $l_1$ norm favours sparse models (lots of coefficients equal to $0$) and $l_2$ favours models with lots of coefficients having small (but most of the times nonzero) values. The intuition behind this is visible in the formula for the penalty. Consider and example vector $x = (1, \varepsilon)$ where $0 < \varepsilon < 1$. Then the norms are $\|x\|_{1}=1+\varepsilon,  \|x\|_{2}^{2}=1+\varepsilon^{2}$. Now we check how the norms change when we subtract the vectors $(\delta, 0)$ and $(0, \delta)$:
 
@@ -184,14 +190,14 @@ As stated in \cite[chapter 18.2]{ESL2} there are two good classifiers that can b
 \end{align*}
 where $x_i, y_i$ denotes $i$-th sample and label in the data set respectively. Let us denote corresponding densities as $f_0$ and $f_1$. Assuming a prior probabilities of class membership $\pi_0, \pi_1, \pi_0 + \pi_1=1$ one can look at the log ratio of class membership probabilities for sample $x_i$:
 \begin{align} 
-\log \frac{P(Y=1 | X=x_i)}{P(Y=0 | X=x_i)}&=\log \frac{f_1(x)}{f_{0}(x)}+\log \frac{\pi_1}{\pi_{0}} \nonumber \\&=\log \frac{\pi_1}{\pi_{0}}-\frac{1}{2}\left(\mu_1+\mu_{0}\right)^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) + x^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) \nonumber\\ &= \delta_1(x_i) - \delta_0(x_i) \text{, where} \nonumber\\
+\log \frac{P(Y=1 | x_i)}{P(Y=0 | x_i)}&=\log \frac{f_1(x)}{f_{0}(x)}+\log \frac{\pi_1}{\pi_{0}} \nonumber \\&=\log \frac{\pi_1}{\pi_{0}}-\frac{1}{2}\left(\mu_1+\mu_{0}\right)^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) + x^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) \nonumber\\ &= \delta_1(x_i) - \delta_0(x_i) \text{, where} \nonumber\\
 \delta_{k}(x)&=x^{T} \mathbf{\Sigma}^{-1} \mu_{k}-\frac{1}{2} \mu_{k}^{T} \mathbf{\Sigma}^{-1} \mu_{k}+\log \pi_{k} \label{eq:dslda}
 \end{align}
 where $\delta_1, \delta_0$ are discriminant scores for classes $1,0$ respectively. As the values of $\mu_1, \mu_0, \pi_1, \pi_0, \Sigma$ are not known mean sample estimates, class proportions and sample covariance matrix are used. The assumption of equal covariance matrices is why this method is called $linear$. By looking at the ratio of class membership probabilities we can see that quadratic parts from exponent cancelled each other resulting in the decision boundary (set where $P(Y=1 | X=x_i) = P(Y=0 | X=x_i)$ to be linear in $x_i$ - a hyperplane. However, if we assume that the covariance matrices are not equal we get a quadratic decision boundary and a method called Quadratic Discriminant Analysis. However, such formulation results in huge number of parameters as each covariance matrix is of size $p \times p$, which is even a problem in LDA. In order to tackle this issue regularization is introduced to form RDA and the covariance matrix is shrunk towards a diagonal one with $\lambda$ as regularization parameter:
 \begin{align*}
     \hat{\Sigma}(\lambda)=\lambda \hat{\Sigma}+(1-\lambda) \alpha I
 \end{align*}
-The value of $\lambda$ is chosen using Ledoit-Wolf lemma (\cite{honey}) and $\alpha$ is the average eigenvalue of sample covariance matrix. In summary, RDA is a simple classifier, that uses Mahalanobis metric to measure distances from mean classes and regularized sample covariance matrix. The linear decision boundary is also appealing as it leads to model that is easy to interpret.
+The value of $\lambda$ is chosen using Ledoit-Wolf lemma (\cite{honey}) and $\alpha$ is the average eigenvalue of sample covariance matrix.
 
 
 The other method is Nearest Shrunken Centroid (NSC) classifier, described in \cite{NSC}. It is based on a very simple nearest centroid classifier: we calculate centroid for each class and then assign each sample to a class based on its distances to these centroid, i.e. to the one with the smallest euclidean distance. Such elementary algorithm doesn't work in settings where $n \ll p$, due to the curse of dimensionality as described in \ref{section:challenges}. Therefore within class centroids coordinates are shrunken toward overall feature mean, making the assignment to classes dependent only on a small subset of variables. To formalize this intuition let us denote $x_{ji}$ as the value of $i$-th variable in $j$-th sample where $i=1, \ldots, p$ and $j=1,\ldots,n$. We assume there are $K$ classes and subset of sample indices for each class is $C_k$ . Let $\bar{x_i}$ denote $i$-th feature mean and $\bar{x_{ik}}$ denote $i$-th feature mean within class $k$. Then we can write:
@@ -216,8 +222,70 @@ With a new sample $x^{*}=\left(x_{1}^{*}, x_{2}^{*}, \ldots, x_{p}^{*}\right)$ t
 
 The first part of this score corresponds to the normalized distance to shrunken centroid and the second one results from a simple prior distribution put on class assignment where $\pi_{k} = \frac{|C_k|}{n}$. By expanding the square in equation \ref{eq:dsnsc} we could see that discriminant score in NSC is very similar to discriminant score for LDA (as in equation \ref{eq:dslda}). In fact the distinctions are that NSC assumes diagonal covariance matrix and uses shrunken centroids instead of sample means. The first one is particularly useful in high dimensional data as covariance matrix is of size $p \times p$ and may influence the stability of scores calculations and therefore usability of the model.
 
+\subsubsection{Linear Support Vector Classifier}
 
-\subsubsection{Linear Support Vector Machines}
+Support Vector Classifier (SVC, \cite[chapter 9]{ISL}) is one of the best "out of the box" classifiers, known to be effective in high dimensional spaces. The technique is base on the concept of maximal margin classifier. Let us denote a data set $X_{n \times p}$ consisting of $n$ samples and $p$ features and a set of labels $Y = (y_1, \ldots, y_n)$ and for simpler classifier rule formulation instead of $y_i \in \{0,1\}$ we have $y_i \in \{-1, 1\}$. We assume our data is completely separable by a hyperplane and our aim is to find it. Such hyperplane can be described by equation:
+\begin{align*}
+    \beta^T x + \beta_0 = 0 \text{ ,where $\beta = (\beta_1, \ldots, \beta_p)$}
+\end{align*}
+Without loss of generality we can assume that samples with label $1$ are the ones above the separating hyperplane. In such case the hyperplane has following property:
+\begin{align*}
+    y_i(\beta^T x + \beta_0) > 0, \ \forall_{i=1, \ldots, n}
+\end{align*}
+
+Such characteristic can be exploited to construct very simple classifier: assign new sample $x^*$ to class $1$ if $\beta^T x^* + \beta_0 > 0$ and to $-1$ if $\beta^T x^* + \beta_0 < 0$. Notice that the magnitude of $|\beta^T x^* + \beta_0|$ determines how far is the sample from our hyperplane and in consequence how confident are we about the assignment. Of course if the data is indeed completely separable there are infinitely many separating hyperplanes. However, we choose the maximum margin hyperplane, i.e the hyperplane that maximizes the distance to the closest point to the hyperplane and additionally our minimal confidence about sample assignment within the data. That distance to closest point is called the margin and the points that are exactly margin away from the hyperplane are called support vectors. The intuition for such naming is that even slight change of any of these points changes the hyperplane, whereas for all other samples the hyperplane is independent, i.e if they are perturb they do not effect the hyperplane unless they are within margin distance from the separating hyperplane. The 2D example of few possible hyperplanes and the optimal one can be found on figure \ref{fig:svc-hyper}.
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{images/svc-hyper.png}
+\caption{Example hyperplances in 2D case. The picture comes from \cite{ISL} - figure 9.2}
+\label{fig:svc-hyper}
+\end{figure}
+
+To formalize the problem of finding the maximum margin hyperplane we can write:
+
+\begin{align*}
+&{\argmax_{\beta_{0}, \beta} \ M} \\ &{\text { subject to } \|\beta\|_2^2 = 1}, \\ &{y_{i}\left(\beta_{0}+\beta^T x_i\right) \geq M \ \forall_{i=1, \ldots, n}}
+\end{align*}
+
+The inequality represents the condition that each point has to be at least by $M$ far from boundary, the norm constraint is used for uniqueness as $\beta_0 +\beta^Tx = 0$ represents the same subspace as $k\cdot(\beta_0 +\beta^Tx) = 0$. Also it ensures that the perpendicular from $x_i$ to hyperplane is equal to $y_i\left(\beta_0 + \beta^Tx_i\right)$. So $M$ is in fact the exact margin. This optimization problem can be rewritten to get rid of $M$. The inequality condition can be replaced by $y_{i}\left(\beta_{0}+\beta^T x_i\right) \geq M\|\beta\|$ and thanks to the solution being invariant to scaling $\beta$ by a constant we can arbitrarily set $\|\beta\| = \frac{1}{M}$. In such case the problem can be formulated discarding $M$:
+
+\begin{align*}
+& \argmin_{\beta, \beta_0} \|\beta\|^2 \\ &{\text { subject to }} {y_{i}\left(\beta_{0}+\beta^T x_i\right) \geq 1 \ \forall_{i=1, \ldots, n}}
+\end{align*}
+
+The above is convex optimization problem and can be solved using Lagrange multipliers. 
+
+However, in real world examples data is usually not linearly separable. SVC tackles this issue by finding a hyperplane that nearly separates all samples using \textit{soft margin}. Another advantage is that even in case of separable data finding not necessarily perfect hyperplane allows the model to perform better on unseen data. At the figure \ref{fig:svc-robust} we can see that adding a single sample to our data may change the hyperplane dramatically - possibly decreasing efficiency when classifying unseen data due to very narrow margin. 
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{images/svc-robust.png}
+\caption{Changes of maximum margin hyperplane when added one data point. The picture comes from \cite{ISL} - figure 9.5}
+\label{fig:svc-robust}
+\end{figure}
+
+The another issue is the decrease of confidence of our assignment for many samples near the margin. Therefore, we change our aim from perfect separation to greater confidence about most samples, ensuring robustness to individual points. We allow few data points to be on the wrong side of the hyperplane for the cost of penalty, which increases with the distance from the subspace. Using the formula it can be written as:
+
+\begin{align*}
+&{\argmax_{\beta_{0}, \beta} \ M} \\ &{\text { subject to } \|\beta\|_2^2 = 1}, \\ &y_{i}\left(\beta_{0}+\beta^T x_i\right) \geq M(1 - \epsilon_i), \\
+& \epsilon_i \geq 0, \ \sum_{i=1}^n \epsilon_i < C \ \forall_{i=1, \ldots, n}
+\end{align*}
+
+Again we can discard $M$ by reformulating the problem to:
+\begin{align*}
+& \argmin_{\beta, \beta_0} \|\beta\|^2 \\ &{\text { subject to }} y_{i}\left(\beta_{0}+\beta^T x_i\right) \geq 1 - \epsilon_i, \\ &\epsilon_i \geq 0, \ \sum_{i=1}^n \epsilon_i < C \ \forall_{i=1, \ldots, n}
+\end{align*}
+
+For computational convenience the above can be presented in equivalent form:
+\begin{align}
+& \argmin_{\beta, \beta_0} \|\beta\|^2 + C \sum_{i=1}^n \epsilon_i \nonumber \\ &{\text { subject to }}\epsilon_i \geq 0, \ \  y_{i}\left(\beta_{0}+\beta^T x_i\right) \geq 1 - \epsilon_i, \ \forall_{i=1, \ldots, n} \label{eq:svcform1}
+\end{align}
+C is the hyperparameter determining how strong we penalize samples being on the wrong side of the margin. In case of $C = \infty$ SVC is equivalent to maximum margin classifier. On the other hand small values of C result in allowing more points to be on the wrong side of the hyperplane. The $\epsilon_i$ are known as slack variables. The value each $\epsilon_i$ determines the relative position to hyperplane. $\epsilon_i=0$ indicates that $x_i$ is on the correct side of hyperplane, at least margin away from it. $0< \epsilon < 1$ means that $x_i$ is on the correct side but within margin distance from subspace. Finally, $\epsilon > 1$ means that $x_i$ is on the wrong side. The notion of support vectors also gets extended to include points not only exactly on the margin but also the ones for which $\epsilon_i > 0$. The classification rule remains the same as for maximum margin classifier. Therefore, the decision on class assignment of new samples is based only on support vectors, i.e. potentially small subset of observations. This characteristic contrasts logistic regression and RDA as their decision rule always depend on all observations. However, some similarities to the first method can be shown. The condition in equation \ref{eq:svcform1} is equivalent to $\forall_{i=1, \ldots, n} \epsilon_i \geq \max \left(0, y_i(\beta_0 + \beta^Tx_i) \right)$. If we minimize the target that includes sum of $\epsilon_i$ then all inequalities will have to be in fact equalities. Additionally denoting $\lambda := \frac{1}{C}$ we can write the equivalent form of our minimization problem:
+\begin{align*}
+    \argmin_{\beta_0, \beta} \sum_{i=1}^n \max \left(0, y_i(\beta_0 + \beta^Tx_i)\right) + \frac{\lambda}{2} \|\beta\|^2
+\end{align*}
+which is as in case of regularized logistic regression a loss term + $L_2$ penalty term. This loss is called \textit{hinge loss} and it behaves similarly to negative log likelihood loss in LR, as for the points far from decision boundary the latter gives very small values.
 
 \subsubsection{Ensemble models}
 
@@ -226,13 +294,11 @@ Random forest, random logistic regressions
 
 \subsection{Dimensionality reduction}
 
-\subsubsection{PCA and SPCA}
+\subsubsection{PCA, sparse PCA and MLCC}
 
 \subsubsection{Partial Least Squared}
 
 \subsubsection{Forest Deep Neural Network}
-
-\subsubsection{Multiple Latent Components Clustering}
 
 
 \subsection{Model assessment and selection} \label{section:selection}
@@ -245,7 +311,6 @@ Good section in ESLII
     \item choice of hyperparams and cross validation
     \item ROC
     \item Preference of recall over ROC  - maybe move to applications section
-    \item Confusion matrix(?)
 \end{itemize}
 
 
