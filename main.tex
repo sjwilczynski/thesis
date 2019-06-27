@@ -86,6 +86,20 @@ The data set consists of $969$ patients. Each patient is represented by the arra
 
 As stated in the introduction our aim is the prediction of future metastases which in terms of our data translates to binary classification problem using the labels. There are numerous examples where classification methods allow to solve very complex problems e.g customer target marketing, document categorization and filtering or computer vision tasks (\cite{dataClassification}). However, in the field of biomedical data not all of them are applicable. The reason is the high dimensional, complex structure of our data, particularly the relation between the number of samples and number of features: $n \ll p$. As mentioned in the section \ref{section:bio} such relation is caused by the relatively low availability of samples and high costs of extracting, processing and labeling new ones. These activities have to be done in laboratory by professionals, in comparison to creation of data sets containing images where anyone can participate in e.g paid labelling procedure. Apart from that huge number of features causes a phenomenon called \textit{curse of dimensionality}. As described in \cite{ISL} the increase in the number of variables can improve the model only if the added features are signals, i.e. associated with the response. On the other hand, if they do not influence the response at all, they introduce noise. This may lead to overfitting (high variance) and significantly larger test error (more details in section \ref{section:selection}). The source of this problem is that with increasing dimension the sample space becomes very sparse and all pairwise distances between data points are alike. Furthermore, huge number of variables introduces more complexity in most models as the number of parameters to estimate grows. In extreme cases it may even lead to lack of convergence in parameter estimation and in consequence lack of model stability. In order to tackle this issue we will use robust classifiers and dimensionality reduction procedures described in further chapters.
 
+\subsection{Model assessment and selection} \label{section:selection}
+
+Good section in ESLII
+
+Maybe it should be put in the beginning of section3 for example to introduce bias-variance trade-off and cross validation and use this notions freely in the model description, e.g. b-v trade-off in Random forest. Also it is good to add it in regularization of LR.
+
+
+\begin{itemize}
+    \item train, val, test split discussion 
+    \item choice of hyperparams and cross validation
+    \item ROC - introducing probability in all mentioned classifiers
+    \item Preference of recall over ROC  - maybe move to applications section
+\end{itemize}
+
 \subsection{Classifiers for high dimensional data}
 
 \subsubsection{Logistic regression and its modifications}
@@ -188,8 +202,8 @@ As stated in \cite[chapter 18.2]{ESL2} there are two good classifiers that can b
 \end{align*}
 where $x_i, y_i$ denote $i$-th sample and label in the data set respectively. Let us denote corresponding densities as $f_0$ and $f_1$. Assuming a prior probabilities of class membership $\pi_0, \pi_1, \pi_0 + \pi_1=1$ one can look at the log ratio of class membership probabilities for sample $x_i$:
 \begin{align} 
-\log \frac{P(Y=1 | x_i)}{P(Y=0 | x_i)}&=\log \frac{f_1(x)}{f_{0}(x)}+\log \frac{\pi_1}{\pi_{0}} \nonumber \\&=\log \frac{\pi_1}{\pi_{0}}-\frac{1}{2}\left(\mu_1+\mu_{0}\right)^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) + x^{T} \mathbf{\Sigma}^{-1}\left(\mu_1-\mu_{0}\right) \nonumber\\ &= \delta_1(x_i) - \delta_0(x_i) \text{, where} \nonumber\\
-\delta_{k}(x)&=x^{T} \mathbf{\Sigma}^{-1} \mu_{k}-\frac{1}{2} \mu_{k}^{T} \mathbf{\Sigma}^{-1} \mu_{k}+\log \pi_{k} \label{eq:dslda}
+\log \frac{P(Y=1 | x_i)}{P(Y=0 | x_i)}&=\log \frac{f_1(x)}{f_{0}(x)}+\log \frac{\pi_1}{\pi_{0}} \nonumber \\&=\log \frac{\pi_1}{\pi_{0}}-\frac{1}{2}\left(\mu_1+\mu_{0}\right)^{T} \Sigma^{-1}\left(\mu_1-\mu_{0}\right) + x^{T} \Sigma^{-1}\left(\mu_1-\mu_{0}\right) \nonumber\\ &= \delta_1(x_i) - \delta_0(x_i) \text{, where} \nonumber\\
+\delta_{k}(x)&=x^{T} \Sigma^{-1} \mu_{k}-\frac{1}{2} \mu_{k}^{T} \Sigma^{-1} \mu_{k}+\log \pi_{k} \label{eq:dslda}
 \end{align}
 where $\delta_1, \delta_0$ are discriminant scores for classes $1,0$ respectively. As the values of $\mu_1, \mu_0, \pi_1, \pi_0, \Sigma$ are not known, mean sample estimates, class proportions and sample covariance matrix are used. The assumption of equal covariance matrices is why this method is called $linear$. By looking at the ratio of class membership probabilities we can see that quadratic parts from exponent cancelled out resulting in the decision boundary (set where $P(Y=1 | X=x_i) = P(Y=0 | X=x_i)$) to be linear in $x_i$ - a hyperplane. However, if we assume that the covariance matrices are not equal we get a quadratic decision boundary and a method called Quadratic Discriminant Analysis. However, such formulation results in huge number of parameters as each covariance matrix is of size $p \times p$, which is even a problem in LDA. In order to tackle this issue regularization is introduced to form RDA and the covariance matrix is shrunk towards a diagonal one with $\lambda$ as regularization parameter:
 \begin{align*}
@@ -211,7 +225,7 @@ The values of $m_k$ and $s_i$ are chosen so that $s_i^2$ is a pooled variance an
     d_{i k}^{\prime}&=\operatorname{sign}\left(d_{i k}\right)\left(\left|d_{i k}\right|-\Delta\right)_{+}
 \end{align*}
 
-This type of shrinkage is called soft thresholding. The advantage here is that with a proper choice of $\Delta$ parameter most of the coordinates of class centroid are equal to the coordinates of the whole data set centroid, leaving only few coordinates of each $\bar{x}_{i k}^{\prime} - \bar{x}_{i}$ nonzero. Those few values will be the one determining the assignment to classes. In terms of our data it translates to making prediction of metastasis dependent only on few chosen genes. It is very reasonable as in microarray analysis most genes does not differ significantly by expression levels between classes and the variability usually comes from random fluctuation and these method aims at removing the noisy features.
+This type of shrinkage is called soft thresholding and is just application of proximal operator used for solving problems with $L_1$ regularization. The advantage here is that with a proper choice of $\Delta$ parameter most of the coordinates of class centroid are equal to the coordinates of the whole data set centroid, leaving only few coordinates of each $\bar{x}_{i k}^{\prime} - \bar{x}_{i}$ nonzero. Those few values will be the one determining the assignment to classes. In terms of our data it translates to making prediction of metastasis dependent only on few chosen genes. It is very reasonable as in microarray analysis most genes does not differ significantly by expression levels between classes and the variability usually comes from random fluctuation and these method aims at removing the noisy features.
 
 With a new sample $x^{*}=\left(x_{1}^{*}, x_{2}^{*}, \ldots, x_{p}^{*}\right)$ to classify we choose the class $k$ with the lowest discriminant score, i.e:
 \begin{align}
@@ -299,7 +313,7 @@ This tree has two nodes. The decision rule in the upper one, i.e root splits the
         \text{Gini index:  } &J_G = \sum_{i=1}^I G_i = \sum_{i=1}^I 2\hat{p_i}(1-\hat{p_i}) \\
         \text{entropy:  } &J_E = \sum_{i=1}^I E_i= \sum_{i=1}^I -\hat{p_i}\log \hat{p_i} - (1-\hat{p_i}) \log (1-\hat{p_i})
 \end{align*}
-Both these criterions have small values if the node is pure - consists only few samples of the other class and are called \textit{impurity} measures. What is more if we for assume a probabilistic interpretation of each node (we assign a sample with probability $\hat{p_i}$ to class 1 and with $1-\hat{p_i}$ to class 0), then if we want to classify a randomly labeled sample according to class distribution in a leaf than the probability of misclassification is exactly $2\hat{p_i}(1-\hat{p_i})$. On the other hand, concept of entropy comes from the information theory and is natural measure of disorder.
+Both these criteria have small values if the node is pure - consists only few samples of the other class and are called \textit{impurity} measures. What is more if we for assume a probabilistic interpretation of each node (we assign a sample with probability $\hat{p_i}$ to class 1 and with $1-\hat{p_i}$ to class 0), then if we want to classify a randomly labeled sample according to class distribution in a leaf than the probability of misclassification is exactly $2\hat{p_i}(1-\hat{p_i})$. On the other hand, concept of entropy comes from the information theory and is natural measure of disorder.
 
 Although the criterion to minimize has a very simple form it is in most cases computationally to complex to check all possible partitions. Therefore, a greedy approach is used, i.e recursive binary splitting. The process starts with a tree containing only root and all samples within it. The greediness comes from the fact that at root we choose a variable and threshold value which 'best' splits the samples to subtrees. Assume we use a Gini index as a measure of tree score and we split the root to $R_1(j, s) = \left\{x_i| x_{ij} < s \right\}, R_2(j, s) = \left\{x| x_{ij} \geq s \right\}$(where $x_{ij}$ is the value of $j$-th feature for $i$-th sample. These means we look for values of $j,s$ minimizing $\frac{|R_1|}{|R_1|+|R_2|}G_{R_1} + \frac{|R_2|}{|R_1|+|R_2|}G_{R_2}$. We want to weigh each node by the number of samples so as to make difference between impurity trivial split (half of each class in each node) and no split $0$ and intuitively indicate that larger nodes has bigger influence on our tree structure. In the resulting nodes the process is repeated until the stop condition is met. The choice of stop condition is important as without it we would split the nodes until each of them is completely pure. These may lead to the tree of large height and small number of data points in each leaf. In other words, the tree would overfit our data set and would perform poorly on unseen data. Popular choices of stop conditions are:
 \begin{itemize}
@@ -314,29 +328,66 @@ The other approach is to instead of incorporating stop conditions, create a huge
 
 Although, decision trees have numerous advantages like being simple to visualize, understand and interpret or able to model complex relations between variables in the feature set, they also suffer from sensitivity to data perturbation and are prone to overfitting. To tackle these issues Random Forest models is used that exploits the technique called bootstrap averaging. We can look at the problem of sensitivity to data perturbation in other way. Imagine we split our data set randomly to two parts and fit a decision tree on each of them independently. Resulting decision trees will likely be much different, in contrast to low variance models like linear/logistic regression. Bootstrap averaging (or bagging) exploits very simple property that the variance of the mean of $n$ independent variables with variance $\sigma^2$ is equal to $\frac{1}{n}\sigma^2$. So in order to reduce variance of our model we can fit many models on different training sets and average the results or in case of classification assign a label which was chosen by a majority of the models. Of course, in most cases we don't have access to multiple data sets so we bootstrap new ones by taking random samples from the original one with replacement and that is why it is called bootstrap averaging. Using a family of deep, not constrained trees was proven to greatly improve the accuracy and stability of decision trees. However, the resulting trees might not be independent or even highly correlated, e.g. if there is a very informative feature that in all bootstrapped data sets is chosen to be used for splitting in the root. For a set of $n$ i.d variables with pairwise positive correlation $\rho$ the variance of average is $\rho \sigma^2 + \frac{1-\rho}{n}\sigma^2$ and increasing number of variables will only reduce the second term. As a result Random Forest model introduces a feature subsampling scheme to reduce the correlation. In each tree, before each node split only $m$ predictors are chosen to be considered in this split instead of all variables. Usual value of $m$ is  $\sqrt{p}$. This means that most of the features are not even examined during a single split, resulting in decorrelated trees. Although this technique called feature bagging usually improves significantly nonlinear estimators we will use it to create a model named in further sections as Random Logistic Regression. We will fit a number of logistic regression models using only a small subset of features for training and average probabilities from the estimators to provide the probability of class membership.
 
-
 \subsection{Dimensionality reduction}
 
-\subsubsection{PCA, sparse PCA and MLCC}
+In the previous section we saw few classifiers applicable in the field of high dimensional data. For most of them the common part is usage of shrinkage that allow the classifier to be stable, prevent them from overfitting in the setting where $n \ll p$. However, there is a family of other techniques called \textit{dimensionality reduction} methods. They deal with the problem of high number of variables out of which only a fraction influence the response. Dimensionality reduction provides a new subspace consisting only of $p^{\prime}$ features, where $p^{\prime} < p$. After reduction only these new variables are used for building models and a number of standard classification techniques might be applied as the dimension can be reduced so that $n > p^{\prime}$. Using dimensionality reduction before fitting a model usually improves its performance on unseen data due to discarding of noisy features and reduces the computational complexity of training. The stability of the model is enhanced as the number of coefficients to estimate is drastically decreased. Dimensionality reduction techniques can be split to two categories: feature extraction and feature selection. Feature extraction methods transform original our variables, usually by taking their linear combinations. On the contrary, feature selection methods does not transform the original set of features, i.e they select a small subset of initial variables and in consequence keep their meaning resulting in better model interpretability. This is a great advantage, especially in the field of biomedical studies, but usually models based on selected feature perform worse than models based on extracted ones. Therefore, in this chapter we focus on feature extraction methods and feature selection is revisited in chapter \ref{section:application}.
 
-\subsubsection{Partial Least Squared}
+\subsubsection{Unsupervised methods}
 
-\subsubsection{Forest Deep Neural Network}
+One of the most popular dimensionality reduction methods is Principal Component Analysis (PCA). It transforms linearly the set of $p$ features to $p^{\prime}$ new uncorrelated features so that the error of the projection to a reduced subspace is minimized causing the information lost during the reduction process is as low as possible. It turns out that such formulation is equivalent to the task of maximization of variance of extracted features which can be interpreted as keeping the directions that allow us to distinguish between different samples. The new features are refereed to as principal components while the axes in corresponding vector space. To see the equivalence between variance maximization and projection error minimization let us look at the first principal axis. If we denote as $X$ centered data matrix $\Sigma = X^TX/(n-1)$ as sample covariance and $w$ as the desired principal axis then we want to maximize $Var(Xw) = w^TX^TXw/(n-1) = w^T\Sigma w$. In order to make the problem well defined we also put a constraint on $w$: $\|w\|_2 = 1$. On the other hand, minimizing the error of projection can be written as $\min_w \| X - X ww^T\|_2^2$. By rewriting this we obtain: 
+\begin{align*}
+\left\|X-X w w^{\top}\right\|^{2}_2 &=\operatorname{tr}\left(\left(X-X w w^{\top}\right)\left(X-X w w^{\top}\right)^{\top}\right) \\ &=\operatorname{tr}\left(\left(X-X w w^{\top}\right)\left(X^{\top}-w w^{\top} X^{\top}\right)\right) \\ &=\operatorname{tr}\left(X X^{\top}\right)-2 \operatorname{tr}\left(X w w^{\top} X^{\top}\right)+\operatorname{tr}\left(X w w^{\top} w w^{\top} X^{\top}\right) \\ &=C-\operatorname{tr}\left(X w w^{\top} X^{\top}\right)=C-\operatorname{tr}\left(w^{\top} X^{\top} X w\right) \\ &=C-w^{\top} \Sigma w = C - Var(Xw)
+\end{align*} where C is a constant independent of $w$. In the above derivation we use the norm constraint on $w$ and trace properties: linearity and a fact that $\operatorname{tr}\left(A^TB\right) = \operatorname{tr}\left(BA^T\right)$ . So by looking at the last equation we can see that minimizing projection error is equivalent to maximizing variance. The principal axes turn out to be eigenvectors of matrix $\Sigma$. To see this let us note that $\Sigma$ is symmetric and semi-definite and therefore can be diagonalized. As the value of $w^T\Sigma w$ does not depend on the basis (as changing bases is just a rotation) we can focus on our maximization problem in the basis of eigenvectors of $\Sigma$. Then $Var(Xw) = \sum_{i=1}^P \lambda_i w_i^2$ where $(\lambda_1, \ldots, \lambda_p)$ are the sorted decreasingly eigenvalues. Note that $\sum_{i=1}^p \lambda_i w_i^2 \leq \lambda_1 \sum_{i=1}^p w_i^2 = \lambda_1 \| w\|_2^2 = \lambda_1$ and it is clear that this value is reached for $w = (1, 0, \ldots, 0)$. To see that the following principal axes are the next eigenvectors notice that if $v$ is the second principal axis then $v \bot w$ and $w \in Lin(b_2, \ldots, b_p)$ where $b_1, \ldots, b_p$ are eigenvectors corresponding to $\lambda_1, \ldots, \lambda_p$. Therefore $v_1 = 0$ (first coordinate in eigenvectors space) and we can use the same inequality argument as for the first axis and continue it for all the other principal axes. Of course for proper dimensionality reduction only first $k < p$ principal components are chosen to be kept as reduced features. 
+PCA is sensitive to scaling so it is advised to standardize data set before applying the method. Also centering is needed to make sure that the principal axes really correspond to maximal variance directions. It is also important to note that PCA is only able to capture linear dependencies between features and might perform poorly if the correlation structure is more complex. The other issue is the choice of the number of features to keep. As for the standard rule of thumb we can choose $k$ principal components so that they explain $95\%$ of data variance. These means choosing $k$ fulfilling:
+\begin{align*}
+    k = \argmin_{k^{\prime}} \frac{\sum_{i=1}^{k^{\prime}} \lambda_i }{\sum_{i=1}^p \lambda_i} \geq 0.95
+\end{align*}
+because $\lambda_i$ is equal to actual variance of $i$-th component. There also exist other methods popular methods as described in \cite[chapter 6]{PCA} or more novel based on Bayesian approach, especially for data sets, for which $n \ll p$, like Penalized Semiintegrated Likelihood (PESEL, \cite{pesel}). 
+
+One significant drawback of PCA is that every principal component is a linear combination of all original features with usually all coefficients non-zero. It makes the new variables difficult to interpret, particularly in $n \ll p $ setting. To tackle this issue family of methods called sparse Principal Component Analysis (sPCA, \cite{sPCAold}) uses a regression interpretation of PCA and imposes a penalty on loadings to regularize them. One of them \textit{sparse PCA via regularized SVD}(\cite{SPCAnew}) exploits Singular Value Decomposition to obtain sparsity. Using the same notation as for PCA, SVD can expressed as:
+\begin{align*}
+    X &= UDV^T \\
+    r &:= rank(X) \\
+    U &= [u_1, \ldots, u_r] \\
+    V &= [v_1, \ldots, v_r] \\
+    D &= diag(d_1, \ldots, d_r), \ \ d_1 \geq \ldots \geq d_r \geq 0. 
+\end{align*}
+$U, V$ are orthonormal matrices whose columns are unit eigenvectors of $XX^T, X^TX$ respectively and $D$ is the diagonal matrix of singular values of $X$. We can notice that $V$ is proportional to $\Sigma$ and therefore we have that $XV = UD$ are the principal components. Moreover column of $V$ represents \textit{loadings} - weights of each variable in linear combination representing PC. sPCA aims at regularizing these loadings. To do this a property of SVD that it produces best l-rank matrix approximation:
+\begin{align*}
+    \argmin_{rank(X_l) = l}\| X - X_l \|_F^2 = \sum_{i=1}^l d_iu_iv_i^T
+\end{align*} where $\| \cdot \|_F$ denotes Frobenius norm. This also means that $d_1u_1v_1^T$ is the best rank one approximation of $X$, $d_2u_2v_2^T$ is the best rank one approximation of residual matrix $X - d_1u_1v_1^T$ and so on. This property will be used to create an iterative procedure producing sparse loadings. In order to find the sparse loading we solve the minimization problem:
+\begin{align*}
+    \min_{u,v, \|u\|_2=1}\|X - uv^T\|_F^2 + \lambda \| v \|_1
+\end{align*}
+Without the penalty term the solution is $u = u_1, v=d_1v_1$. The algorithm \ref{alg:sPCA} is presented in \cite{SPCAnew} for solving this problem.
+\begin{algorithm}
+\caption{sPCA via regularized SVD}
+\label{alg:sPCA}          
+\begin{algorithmic}                    
+    \STATE Compute SVD for X and set $v := d_1v_1, \ u := u_1$
+    \STATE Until convergence repeat:
+    \begin{enumerate}
+        \item $v = sign(X^Tv)(|X^Tv| - \lambda)_+$
+        \item $u = \frac{Xv}{\|Xv\|}$
+    \end{enumerate}
+    \STATE After convergence standardize $v$: $v = \frac{v}{\|v\|}$
+\end{algorithmic}
+\end{algorithm}
+
+The soft thresholding in the loop of the algorithm is no surprise as it is an application of proximal operator used for solving problems with $L_1$ regularization for which gradient descent is not applicable. In order to calculate further loadings we apply the algorithm to the next residual matrices. The sparsity of the solution depends on the value of tuning parameter $\lambda$.
+
+Multiple Latent Components Clustering (MLCC, \cite{MLCC}) deals with PCA disadvantages differently. The assumption used in PCA that the samples come from the same subspace of small dimension may be unjustified. A better one is to expect that the data comes from a union of low dimensional subspaces. The method for a fixed number of clusters (subspaces) performs an extensions of k-means algorithm on features where each cluster is represented by a subset of principal components of contained variables and the similarity between a factor and a subspace is calculated using Bayesian Information Criterion(BIC). The number of elements in each subset is determined using mentioned before PESEL. Additionally the number of clusters may be estimated automatically using a modified version of BIC for model selection. 
+
+In more details the method assumes that our data $X_{n\times p} = [x_1, \ldots x_p]$ comes from $K$ subspaces. Each of the subspaces is represented by its dimensionality $k_i$, set of factors that generate the subspace $F_i$ and each variable in a cluster is normally distributed. To formalize this we can write:
+\begin{align*}
+    x_{i j} | F_{i}, c_{i j}, \sigma_{i}^{2}, \mu_{i} \sim N\left(\mu_{i} + F_{i} c_{i j}, \sigma_{i}^{2} I_{n}\right)
+\end{align*} 
+where $x_{ij}$ is the $j$-th variable in $i$-th cluster, $c_{ij}$ is a vector of coefficients representing the feature in terms of factors and $sigma_i^2$ is a magnitude of noise within $i$-th cluster. These assumptions are needed for PESEL to perform well. For a given cluster PESEL not only estimates the $k_i$ 
+
+\subsubsection{Supervised methods}
+PLS and FDNN
 
 
-\subsection{Model assessment and selection} \label{section:selection}
-
-Good section in ESLII
-
-Maybe it should be put in the beginning of section3 for example to introduce bias-variance tradeoff and cross validation and use this notions freely in the model description, e.g. b-v tradeoff in Random forest. Aslo it is good to add it in regularization of LR.
-
-
-\begin{itemize}
-    \item train, val, test split discussion 
-    \item choice of hyperparams and cross validation
-    \item ROC - introducing probability in all mentioned classifiers
-    \item Preference of recall over ROC  - maybe move to applications section
-\end{itemize}
 
 
 \section{Exploratory analysis}
@@ -431,7 +482,7 @@ Although most variables seem to have correlation close to $0$ we can clearly see
 \end{itemize}
 
 
-\section{Applications in medicine}
+\section{Applications in medicine} \label{section:application}
 
 \begin{itemize}
     \item What is acceptable in medicine
