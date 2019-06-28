@@ -376,16 +376,57 @@ Without the penalty term the solution is $u = u_1, v=d_1v_1$. The algorithm \ref
 
 The soft thresholding in the loop of the algorithm is no surprise as it is an application of proximal operator used for solving problems with $L_1$ regularization for which gradient descent is not applicable. In order to calculate further loadings we apply the algorithm to the next residual matrices. The sparsity of the solution depends on the value of tuning parameter $\lambda$.
 
-Multiple Latent Components Clustering (MLCC, \cite{MLCC}) deals with PCA disadvantages differently. The assumption used in PCA that the samples come from the same subspace of small dimension may be unjustified. A better one is to expect that the data comes from a union of low dimensional subspaces. The method for a fixed number of clusters (subspaces) performs an extensions of k-means algorithm on features where each cluster is represented by a subset of principal components of contained variables and the similarity between a factor and a subspace is calculated using Bayesian Information Criterion(BIC). The number of elements in each subset is determined using mentioned before PESEL. Additionally the number of clusters may be estimated automatically using a modified version of BIC for model selection. 
+Multiple Latent Components Clustering (MLCC) deals with PCA disadvantages differently. The assumption used in PCA that the samples come from the same subspace of small dimension may be unjustified. A better one is to expect that the data comes from a union of low dimensional subspaces. The method tries to find these subspaces and for a fixed number of clusters (subspaces) performs an extensions of k-means algorithm on features where each cluster is represented by a subset of principal components of contained variables and the similarity between a factor and a subspace is calculated using Bayesian Information Criterion(BIC). The number of elements in each subset is determined using mentioned before PESEL. Additionally the number of clusters may be estimated automatically using a modified version of BIC (mBIC) for model selection. 
 
 In more details the method assumes that our data $X_{n\times p} = [x_1, \ldots x_p]$ comes from $K$ subspaces. Each of the subspaces is represented by its dimensionality $k_i$, set of factors that generate the subspace $F_i$ and each variable in a cluster is normally distributed. To formalize this we can write:
 \begin{align*}
     x_{i j} | F_{i}, c_{i j}, \sigma_{i}^{2}, \mu_{i} \sim N\left(\mu_{i} + F_{i} c_{i j}, \sigma_{i}^{2} I_{n}\right)
 \end{align*} 
-where $x_{ij}$ is the $j$-th variable in $i$-th cluster, $c_{ij}$ is a vector of coefficients representing the feature in terms of factors and $sigma_i^2$ is a magnitude of noise within $i$-th cluster. These assumptions are needed for PESEL to perform well. For a given cluster PESEL not only estimates the $k_i$ 
+where $x_{ij}$ is the $j$-th variable in $i$-th cluster, $c_{ij}$ is a vector of coefficients representing the feature in terms of factors and $\sigma_i^2$ is a magnitude of noise within $i$-th cluster. The entire algorithm is presented in \ref{alg:mlcc}.
+
+\begin{algorithm}
+\caption{Multiple Latent Components Clustering}
+\label{alg:mlcc}          
+\begin{algorithmic}                    
+    \REQUIRE $N$ - number of runs of the algorithm, $iter_{max}$ - maximal number of iterations
+    \STATE Standardize data matrix $X$
+    \FOR{$i \in \{1, \ldots, N\}$}
+        \STATE 
+        	\begin{enumerate}
+        	\item Initialize clusters' centers
+        	\item Until convergence or $iter_{max}$ times
+        	\begin{enumerate}
+        	\item For $j=1, \ldots, p, \ j^{\prime} = 1, \ldots, K$ compute $BIC_{jj^{\prime}}$ which is the value of BIC for linear regression model $lm(x_j \sim F_{j'})$
+        	\item For $j=1, \ldots, p$ assign $x_j$ to $q$-th cluster where $q = \argmax_{j' \in \{1,\ldots, K\}} BIC_{jj'} $
+        	\item For every cluster use PESEL to estimate its dimensionality $k_i$. Use PCA to compute the first $k_i$ principal components and store them in $F_i$
+        	\end{enumerate}
+        	\item Store mBIC for computed model
+        	\end{enumerate}
+        	\ENDFOR
+        \STATE Choose the model with the highest value of mBIC and use $F_i$ for $i=1, \ldots, K$ as new set of features
+\end{algorithmic}
+\end{algorithm}
+
+The initial choice of cluster centers is random - the algorithm selects $K$ variables from the data as the initial factors. Similarly to k-means the MLCC only finds local maxima of mBIC, therefore many different initialization have to be tried. To estimate the number of clusters one can run MLCC for different values of $K$ and choose the model with the highest value of mBIC as it penalizes dimensionality of the model. More details can be found in \cite{MLCC}.
 
 \subsubsection{Supervised methods}
-PLS and FDNN
+
+The common disadvantage of the methods in the previous section is that they are unsupervised, i.e do not use in any way labels associated with samples in our data. In consequence there is no guarantee that the new set of features will be right for the classification task. This is even more evident for microarray data as many gene expression profile can have high variability and be responsible for biological process completely separate from our concern. In this section we present two methods that perform dimensionality reduction in a supervised manner - taking into account the particular prediction task. First of them is called Partial Least Squares (PLS). Primarily it was designed for regression problems and improving the properties of OLS estimator, allowing it to be identifiable in $n \ll p$ setting. Nonetheless, PLS was used with success in the analysis of microarray data for tumor classification (\cite{TumorPLS}). The aim of PLS can be nicely compared with the aim of PCA. Whereas, PCA looks for orthogonal directions that maximizing variance, the PLS finds orthogonal directions that maximize covariance of new features with the response. It can be formulated as:
+\begin{align*}
+& \text{For $k=1, \ldots, p^{\prime}$}: \\
+& w_k = \argmax_{\|w_k\|_2 = 1} Cov \left(Xw,y\right) \\
+&\text{subject to } Xw_k \ \bot \  Xw_{k^{\prime}} \text{ for } k^{\prime} \neq k  
+\end{align*}
+where $p^{\prime}$ is the number of features in the reduced space. One of the algorithms for finding such $w_k$ is \textit{non iterative partial least squares} and can be found in \cite[chapter 3.5.2]{ESL2}. 
+
+The other supervised dimensionality reduction method, that performs classification as well, namely Forest Deep Neural Network is much more novel and described in \cite{fDNN}. This method aims at exploiting neural networks, one of the most powerful, state-of-the-art family of models applicable in the field of classification, in analysis of high dimensional data. Neural networks usually do not work in the $n \ll p$ setting as in order to capture the complicated correlations within the data they need to be trained using large number of samples that have to be significantly larger than the number of features. In order to tackle this issue a new representation of variables is created using Random Forest technique. The method fits Random Forest classifier consisting of $p^{\prime}$ decision trees $T_1, \ldots, T_{p^{\prime}}$. Let $T_i(x_j)$ be the label assigned to $j$-th sample by $i$-th tree. Then the new representation of $j$-th sample is $x_j^{\prime} = \left(T_1(x_j), \ldots, T_{p^{\prime}}(x_j)\right)$ and the reduced data matrix is $X^{\prime}$. For purpose of our analysis we will use neural network consisting of two hidden layers. The flow of data through the network can be expressed as:
+\begin{align*} 
+P(y | X^{\prime}) &= softmax\left(Z_1 W_{out}+b_{out}\right) \\ 
+Z_{1} &=f_a\left(Z_0 W_1+b_1\right) \\ 
+Z_{0} &=f_a\left(X^{\prime} W_0+b_0\right) 
+\end{align*}
+
+where $W_0, W_1, b_0, b_1$ are weights and biases of hidden layers, $W_{out}, b_{out}$ weight and bias of output layer and $f_a$ is an activation function (we use rectified linear unit (ReLU)). We also use dropout between hidden layers for regularization. Number of parameters in each layer and dropout rate are tuning parameters. For training we use Adam optimizer and cross-entropy loss function as optimization target. These are standard choices for neural network architecture and more details on the topic can be found in \cite{deeplearning}. Graphically the whole model is presented in figure \ref{fig:fDNN}. 
 
 
 
