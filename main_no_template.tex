@@ -1,9 +1,10 @@
-\documentclass[shortabstract, english, mgr]{iithesis}
+\documentclass[12pt, wide]{mwart}
 \usepackage[utf8]{inputenc}  
 \usepackage[english]{babel}
 \usepackage{graphicx}    
 \usepackage{epstopdf}
-\usepackage{amsmath,amsfonts,amsthm,mathtools}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
+\usepackage{xcolor}
 \usepackage{bbm}  
 \usepackage{hyperref}
 \usepackage{url}
@@ -27,46 +28,65 @@
     
 \renewcommand{\labelitemi}{\textbullet}
 
-\author{Stanisław Wilczyński}
-\englishtitle{Microarray data analysis in prediction of breast cancer metastasis}
-\polishtitle{Analiza mikromacierzy DNA w predykcji przerzutów raka piersi}
-
-\englishabstract{English abstract}
-\polishabstract{Polski abstrakt}
-\advisor{dr Jan Chorowski}
 
 \begin{document}
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\textbf{\large University of Wrocław \\Faculty of Mathematics and Computer Science\\ Institute of Computer Science}\\
+\textit{\large  Computer Science}\\
+\vspace{4cm}
+\textbf{\textit{\large Stanisław Wilczyński}\\
+\vspace{0.5cm}
+{\Large Microarray data analysis in prediction of breast cancer metastasis}}\\
+\end{center}
+\vspace{3cm}
+\begin{center}
 
-\chapter{Introduction}
+\large {Master thesis\\
+under supervision of\\
+dr Jan Chorowski\\}
 
-\section{Overview}
+\end{center}
+
+\vfill
+\begin{center}
+\large Wrocław 2019\\
+\end{center}
+
+\afterpage{\blankpage}
+\newpage
+\tableofcontents    
+\section{Introduction}
+
+\subsection{Overview}
 One of the major problems of modern medical studies is the prediction of future metastases of breast cancer diagnosed patients. Although metastases are the main cause of death of such patients and despite the effort in uncovering the underlying mechanism, there was only a minimal improvement in the field in recent years. The main concern is the lack of reliable method to classify patients to 'poor prognosis' and 'good prognosis' groups. The first one refers to patients that would develop a distant metastasis within five years sine first tumor appearance. According to \cite{Metastasis1} the mechanism of distinguishing between these two classes could greatly reduce the number of patients unnecessarily receiving chemotherapy. Data mining seems to be a great candidate for automating the process of such diagnosis as it could allow to predict the outcome of the disease based on hidden, almost impossible to detect correlations or dependencies within the data. One of the most appealing candidate for highly informative data is the level of gene expression collected from the tumor cells. There are numerous examples of such data proving to be useful in tumor classification (\cite{BreastCancerClassification}, \cite{TumorMolecularClass}, \cite{TumorsClass1}, \cite{TumorClass2}). Unfortunately, the analysis of gene expression can be problematic, due to the number of features (measurements of expressed genes) being much higher than the number of samples (patients), as the extraction of gene expression data is costly. Such relation causes a phenomenon called 'curse of dimensionality' (\cite[p. 22-26]{ESL2}). In order to decrease this effect the dimensionality reduction techniques are often applied (\cite{MasterArts}, \cite{TumorClass4}, \cite{TumorPLS}). Such reduction even allows to use with success one of the most popular and state-of-the-art techniques such as neural network (\cite{fDNN}), which does not work in the settings where number of features is significantly higher than number of samples. Another important techniques are building a sparse representation (\cite{TumorClass3}) or using strong regularization (\cite[p. 649-666]{ESL2}) in constructed models. However, in scope of prediction of metastases data-mining methods are not so popular. In fact, current research focus mostly on purely biological markers (\cite{Metastasis4}, \cite{dataOrigin}), use prior knowledge based on protein-protein interaction networks (\cite{MetastasisScores}) or operate on very small samples (less than $100$ patients) and utilize only basic classification methods (\cite{Metastasis1}, \cite{Metastasis2}). Such reluctance to adopt more advanced models is usually caused by the requirement of having a model which can be easy to interpret. In terms of gene expression data it refers to being able to highlight the genes having the highest influence on the response. In this thesis, we focus on comparing different classification, dimensionality reduction or feature selection/extraction methods in order to find the ones applicable in the field of prediction of future metastases of breast cancer diagnosed patients. We use a gene expression data set consisting of $969$ patients for whom $12179$ genes expression levels were measured.
 
-\section{Contribution}
+\subsection{Contribution}
 
 In this thesis we present different classification and dimensionality reduction methods, discuss their advantages and weaknesses and apply them to the gene expression data. The main contribution is showing how this methods could help in providing automatic diagnosis and deciding about potential highly toxic treatment. Moreover, we show that previously used methods are outperformed by our framework. The code for all the experiments performed in this thesis is available at \url{github.com/sjwilczynski/geneExpr}.  
 
-\section{Outline}
+\subsection{Outline}
 In section 2 we explain the medical notions in the simplified form to make it understandable for a person with very little biological knowledge and explain how our data set was collected and processed. In section 3 we discuss the methods used for classification and dimensionality reduction. In section 4 we statistically and graphically inspect our data. In section 5 we present the results of our analysis and discuss them. In section 6 we consider the medical applications and show how specific requirements in the field implies some tuning of our models. In section 7 conclusions are presented.
 
-\chapter{Gene expression data}
+\section{Gene expression data}
 
-\section{Biological background} \label{section:bio}
+\subsection{Biological background} \label{section:bio}
 In this section we briefly explain biological notions used throughout the thesis, based on \cite{NHGRI} and \cite[chapters~11,12]{GeneExpr}. The \textit{cell} is the smallest structural and functional unit of a living organism that is able to run a biological processes (e.g metabolism, growth, reproduction). Every cell contains a \textit{DNA} (deoxyribonucleic acid) which is a chemical compound carrying the information needed to develop and direct the activities of the cell. DNA is composed two chains coiling around each other, which are made of four basic chemical units called nucleotides. A \textit{DNA sequence} is a particular arrangement of these nucleotides within a chain. This arrangement is what codes a unique characteristic of an organism. A \textit{genome} is an entire DNA sequence of a living creature. A \textit{gene} refers to a specific fragment of genome that has a distinct purpose, especially carries instructions for producing a RNA molecule and then a protein. \textit{Proteins} and \textit{RNA molecules} are basic functional molecules in organisms, that among many applications within a cell control chemical reactions, regulate growth and participate in communication in biological pathways. In case of DNA mutation, the information it contains can be corrupted, causing a production of undesirable protein and disruption of standard flow of biological process. Such disruption, if undetected by immunological system can lead to diseases development.
 
 \textit{Gene expression} is the process during which the instructions coded in gene are used to synthesize its products. The level of expression corresponds to the amount of molecules created during this process. The gene is \textit{upregulated} if it synthesizes more, and \textit{downregulated} if synthesizes less when compared with such production in some reference conditions, assumed to be a homeostasis. The state-of-the-art technique for measuring relative expression levels is gene expression profiling using DNA microarrays. The main application of microarrays is to discover how genes functioning changes in response to genetic and environmental variations. \textit{Microarray} is a glass or plastic surface with microscopic spots, placed in regular intervals. Each spot contains picomoles ($10^{-12}$ moles) of a specific DNA sequence, known as \textit{probes}, which interact with tested and reference gene expression product, resulting in emitting measurable signal. By using products from two different cells (e.g cancer and healthy) on the same microarray we can measure the ratio of expression. These ratios are later gathered to form a vector of expression ratios of different genes. In order to conduct a research aimed at specific disease we collect vectors for different individuals with common condition and form a matrix. This matrix is referred as \textit{gene expression data}. As stated in \cite{preprocessing} there are two main sources of variations in microarray measurements. The first one called \textit{interesting variation} corresponds to the case when, for example, highly upregulated gene causes an illness and there is a noticeable difference between diseased and normal tissue. However, the other one called \textit{obscured variation} is induced by differences in the process of sample preparation, microarray manufacturing or even collecting the results from an array. Due to such diversity of possible factors influencing the results obtained from a microaaray it is crucial to apply normalization methods before actual data analysis in order to avoid misleading or even completely incorrect conclusions.
 
 A tumor is a mass formed by a group of abnormal cells. This abnormality refer to disruption in the process of division and apoptosis. However, not all tumors are cancerous. The cancerous tumors (referred as malignant) are characterized by uncontrolled growth and division that leads to damaging nearby tissues. The process of spreading cancerous cell from primary source to other parts of body is called metastasis. Simplifying, it can be described as partial detachment of the tumor and its transport with blood to other part of the organism. Such secondary pathological sites are called metastases and are particularly dangerous. The gene expression data is of great interest in cancer related research as the alteration of cancerous cell division pattern is usually caused by either a mutation in a set of genes or a change in expression level.
 
-\section{Data description} \label{section:description}
+\subsection{Data description} \label{section:description}
 
 The data set consists of $969$ patients. Each patient is represented by the array measurement of the expression level from his cancerous cell. Such measurement has its unique identifier (e.g \textit{GSM177885}) referring to Gene Expression Omnibus (\cite{GEO}, \cite{NCBI2}). Gene Expression Omnibus is public database storing various forms of high-throughput functional genomic data. The repository is maintained by US organization National Center for Biotechnology Information and the data is uploaded and reviewed by scientific community. The \textit{GSM} prefix indicates that this identifiers corresponds to a single sample/cell. Other prefixes refer to series of data gathered within the same conditions (\textit{GSE}), platform (specific micorarray technology) used to perform the experiment (\textit{GPL}), collections of samples assembled by GEO staff (\textit{GDS}). In case of our data set, it was assembled from 10 public microarray data sets, namely: GSE25066, GSE20685, GSE19615, GSE17907, GSE16446, GSE17705, GSE2603, GSE11121, GSE7390, GSE6532. Each series was obtained using Affymetrix Human Genome HG-U133 Plus 2.0 and HG-U133A arrays, which refer to the mentioned earlier platform. As explained in \ref{section:bio} it is essential to preprocess data before the analysis. Therefore, each data set was first normalized using quantile normalization described in \cite{quantileNorm}, then further processed using robust multi-array average (RMA) probe summary algorithm from \cite{preprocessing}. Due to the fact that these series could have different number of genes expression measured they were combined together on the basis of HG-U133A array probe names resulting in reducing the number of variables to $12179$. Each variable correspond to a level of expression of a specific gene (e.g. RPL41). Each patient is also labeled. Label $1$ corresponds to people who had metastatic event within 5 years from being cancer diagnosed. $0$ corresponds to people who had the first follow up after $5$ years or no metastasis at all. There are $393$ and $576$ samples with labels $1$ and $0$ respectively.
 
-\chapter{High dimensional data analysis}
+\section{High dimensional data analysis}
 
 As stated in the introduction our aim is the prediction of future metastases which in terms of our data translates to binary classification problem using the labels. There are numerous examples where classification methods allow to solve very complex problems e.g customer target marketing, document categorization and filtering or computer vision tasks (\cite{dataClassification}). However, in the field of biomedical data not all of them are applicable. The reason is the high dimensional, complex structure of our data, particularly the relation between the number of samples and number of features: $n \ll p$. As mentioned in the section \ref{section:bio} such relation is caused by the relatively low availability of samples and high costs of extracting, processing and labeling new ones. These activities have to be done in laboratory by professionals, in comparison to creation of data sets containing images where anyone can participate in e.g paid labelling procedure. Apart from that huge number of features causes a phenomenon called \textit{curse of dimensionality}. As described in \cite[chapter 6.4.3]{ISL} the increase in the number of variables can improve the model only if the added features are signals, i.e. associated with the response. On the other hand, if they do not influence the response at all, they introduce noise. This may lead to overfitting (high variance) and significantly larger test error. The source of this problem is that with increasing dimension the sample space becomes very sparse and all pairwise distances between data points are alike. Furthermore, huge number of variables introduces more complexity in most models as the number of parameters to estimate grows. In extreme cases it may even lead to lack of convergence in parameter estimation procedure and in consequence lack of model stability. In order to tackle this issue we will use robust classifiers and dimensionality reduction methods described in further chapters.
 
-\section{Model assessment and selection} \label{section:selection}
+\subsection{Model assessment and selection} \label{section:selection}
 
 Before introduction of dimensionality reduction and classification techniques we focus on showing how to choose from a variety of different models and how to assess them. These two tasks are quite different and there exists a variety of methods with distinct tradeoffs. Model assessment typically refers to estimation of generalization performance of the model - its predictive power on new, unseen data. In scope of model selection we can distinguish two task. The first one, subtask of the other, is choice of model \textit{hyperparamters} - parameters of the model which are not estimated during training phase but rather provided as an input. An example is a $k$ in k-Nearest-Neighbour classifier or any regularization constant (e.g section \ref{section:logit}). The other one is the choice of learning algorithm - not only we want to find the best parameters but also be able to determine which classifier is best-suited for our problem. One key difference between model assessment and selection is that in case of the latter we only need to measure relative performance of the models - they may be biased on condition that bias influences all models equally. In case of model assessment we are only interested in unbiased estimators of generalization performance.
 
@@ -74,7 +94,7 @@ In order to further elaborate on evaluation techniques we introduce two key noti
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{images/BiasVarianceTrade.png}
+\includegraphics[width=0.65\textwidth]{images/BiasVarianceTrade.png}
 \caption{Bias variance tradeoff. The picture comes from \cite{ESL2} - figure 7.1}
 \label{fig:biasVarTrade}
 \end{figure}
@@ -95,7 +115,7 @@ So far we discussed model assessment and model selection in terms of hyperparame
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{images/nestedCV.png}
+\includegraphics[width=0.65\textwidth]{images/nestedCV.png}
 \caption{Nested cross validation - picture comes from \cite{ModelSelection}, figure 22}
 \label{fig:nestedCV}
 \end{figure}
@@ -126,9 +146,9 @@ By using our case as an example precision measures how many patients that are as
 
 If we used a random classifier for balanced classes we would obtain a ROC curve equal to $x=y$ line. Therefore this line is treated as baseline and is present in the plots. The AUC for the perfect classifier is $1$ and for the baseline is $0.5$. The AUC may be interpreted as expectation that uniformly drawn positive sample is ranked before a uniformly drawn negative sample. As mentioned before in our problem we care much more about high TPR than low FPR, therefore we would exploit the features of ROC and we will adjust decision threshold values.
 
-\section{Classifiers for high dimensional data}
+\subsection{Classifiers for high dimensional data}
 
-\subsection{Logistic regression and its modifications} \label{section:logit}
+\subsubsection{Logistic regression and its modifications} \label{section:logit}
 
 One of the most popular and simple classifiers for binary response is logistic regression (LR). It is a counterpart of linear regression for regression problems and was proven to be valuable method for microarray analysis (\cite{LRgene}). The model aims at estimating the conditional probability of class membership. It is described by the following formula:
 \begin{align*}
@@ -215,7 +235,7 @@ We can see regularizing the first, larger coordinate in $l_2$ has results in muc
 
 In terms of linear regression these two methods are called ridge regression and LASSO. There also exists a combination of these two i.e. Elastic Net where the penalty is the linear combination of $L_1$ and $L_2$ regularization. As different models can use such regularization in the further chapters we will refer to them as $L_1, L_2$ and Elastic Net penalties.
 
-\subsection{Regularized Discriminant Analysis and Nearest Shrunken Centroid}
+\subsubsection{Regularized Discriminant Analysis and Nearest Shrunken Centroid}
 
 As stated in \cite[chapter 18.2]{ESL2} there are two good classifiers that can be used as baseline in high dimensional setting. The first one Regularized Discriminant Analysis (RDA), which is an extension of Linear Discriminant Analysis (LDA) (\cite[chapter 4.3]{ESL2}). The assumption of LDA is that samples from each class come from multivariate normal distribution with the same covariance matrix $\Sigma$. In terms of two classes it can be written as:
 \begin{align*}
@@ -258,7 +278,7 @@ With a new sample $x^{*}=\left(x_{1}^{*}, x_{2}^{*}, \ldots, x_{p}^{*}\right)$ t
 
 The first part of this score corresponds to the normalized distance to shrunken centroid and the second one results from a simple prior distribution put on class assignment where $\pi_{k} = \frac{|C_k|}{n}$. By expanding the square in equation \ref{eq:dsnsc} we could see that discriminant score in NSC is very similar to discriminant score for LDA (as in equation \ref{eq:dslda}). In fact the distinctions are that NSC assumes diagonal covariance matrix and uses shrunken centroids instead of sample means. The first one is particularly useful in high dimensional data as covariance matrix is of size $p \times p$ and may influence the stability of scores calculations and therefore usability of the model.
 
-\subsection{Linear Support Vector Classifier}
+\subsubsection{Linear Support Vector Classifier}
 
 Support Vector Classifier (SVC, \cite[chapter 9]{ISL}) is one of the best "out of the box" classifiers, known to be effective in high dimensional spaces. The technique is base on the concept of maximal margin classifier. Let us denote a data set $X_{n \times p}$ consisting of $n$ samples and $p$ features and a set of labels $Y = (y_1, \ldots, y_n)$ and for simpler classifier rule formulation instead of $y_i \in \{0,1\}$ we have $y_i \in \{-1, 1\}$. We assume our data is completely separable by a hyperplane and our aim is to find it. Such hyperplane can be described by equation:
 \begin{align*}
@@ -321,13 +341,13 @@ C is the hyperparameter determining how strong we penalize samples being on the 
 \end{align*}
 which is as in case of regularized logistic regression a loss term + $L_2$ penalty term. This loss is called \textit{hinge loss} and it behaves similarly to negative log likelihood loss in LR, as for the points far from decision boundary the latter gives very small values.
 
-\subsection{Ensemble learning}
+\subsubsection{Ensemble learning}
 
 In this section we describe two classification techniques based on the concept of ensemble learning. Ensemble learning is a method of training multiple models and aggregating their results to produce a prediction for a sample. These models may be very simple and poor classifiers by themselves but a group of them may form a powerful predictor. The first of these techniques is Random Forest introduced in \cite{RF}. Here the simple learners are decision trees. Decision tree splits the feature space to a number of regions using feature value based rules and assigns a new sample to a class which is a majority in the resulting region for this data point. An example of classification decision tree can be seen on figure \ref{fig:decision-tree}.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.7\textwidth]{images/decision_tree.png}
+\includegraphics[width=0.6\textwidth]{images/decision_tree.png}
 \caption{An example of a decision tree from \url{https://machinelearningmastery.com/classification-and-regression-trees-for-machine-learning/}}
 \label{fig:decision-tree}
 \end{figure}
@@ -352,11 +372,11 @@ The other approach is to instead of incorporating stop conditions, create a huge
 
 Although, decision trees have numerous advantages like being simple to visualize, understand and interpret or able to model complex relations between variables in the feature set, they also suffer from sensitivity to data perturbation and are prone to overfitting. We can look at the problem of sensitivity to data perturbation in other way. Imagine we split our data set randomly to two parts and fit a decision tree on each of them independently. Resulting decision trees will likely be much different, in contrast to low variance models like linear/logistic regression. To tackle these issues Random Forest model is used that exploits the technique called bootstrap averaging. Bootstrap averaging (or bagging) exploits very simple property that the variance of the mean of $n$ independent variables with variance $\sigma^2$ is equal to $\frac{1}{n}\sigma^2$. So in order to reduce variance of our model we can fit many models on different training sets and average the results or in case of classification assign a label which was chosen by a majority of the models. Of course, in most cases we don't have access to multiple data sets so we bootstrap new ones by taking random samples from the original one with replacement and that is why it is called bootstrap averaging. Usage of a family of deep, not constrained trees was proven to greatly improve the accuracy and stability of decision trees. However, the resulting trees might not be independent or even highly correlated, e.g. if there is a very informative feature that in all bootstrapped data sets is chosen to be used for splitting in the root. For a set of $n$ i.d variables with pairwise positive correlation $\rho$ the variance of average is $\rho \sigma^2 + \frac{1-\rho}{n}\sigma^2$ and increasing number of variables will only reduce the second term. As a result Random Forest model introduces a feature subsampling scheme to reduce the correlation. In each tree, before each node is split only $m$ predictors are chosen to be considered in this split instead of all variables. Usual value of $m$ is  $\sqrt{p}$. This means that most of the features are not even examined during a single split, resulting in decorrelated trees. Although this technique called feature bagging usually improves significantly nonlinear estimators we will use it to create a model named in further sections as Random Logistic Regression. We will fit a number of logistic regression models using only a small subset of features for training and average probabilities from the estimators to provide the probability of class membership.
 
-\section{Dimensionality reduction}
+\subsection{Dimensionality reduction}
 
 In the previous section we saw few classifiers applicable in the field of high dimensional data. For most of them the common part is usage of shrinkage that allow the classifier to be stable or prevent from overfitting in the setting $n \ll p$. However, there is a family of other techniques called \textit{dimensionality reduction} methods. They deal with the problem of high number of variables out of which only a fraction influence the response. Dimensionality reduction provides a new subspace consisting only of $p^{\prime}$ features, where $p^{\prime} < p$. After reduction only these new variables are used for building models and a number of standard classification techniques might be applied as the dimension can be reduced so that $n > p^{\prime}$. Using dimensionality reduction before fitting a model usually improves its performance on unseen data due to discarding of noisy features and reduces the computational complexity of training. Moreover, the stability of the model is enhanced as the number of coefficients to estimate is drastically decreased. Dimensionality reduction techniques can be split to two categories: feature extraction and feature selection. Feature extraction methods transform original variables, usually by taking their linear combinations. On the contrary, feature selection methods do not transform the original set of features, i.e they select a small subset of initial variables and in consequence keep their meaning resulting in better model interpretability. This is a great advantage, especially in the field of biomedical studies, but usually models based on selected features perform worse than models based on the extracted ones. Therefore, in this chapter we focus on feature extraction methods and feature selection is revisited in chapter \ref{section:application}.
 
-\subsection{Unsupervised methods}
+\subsubsection{Unsupervised methods}
 
 One of the most popular dimensionality reduction methods is Principal Component Analysis (PCA). It transforms linearly the set of $p$ features to $p^{\prime}$ new uncorrelated features so that the error of the projection is minimized causing the information lost during the reduction process to be as low as possible. It turns out that such formulation is equivalent to the task of maximization of variance of extracted features which can be interpreted as keeping the directions that allow us to distinguish between different samples. The new features are refereed to as principal components while the axes in corresponding vector space are called principal axes. To see the equivalence between variance maximization and projection error minimization let us look at the first principal axis. If we denote as $X$ centered data matrix $\Sigma = X^TX/(n-1)$ as sample covariance and $w$ as the desired principal axis then we want to maximize $Var(Xw) = w^TX^TXw/(n-1) = w^T\Sigma w$. In order to make the problem well defined we also put a constraint on $w$: $\|w\|_2 = 1$. On the other hand, minimizing the error of projection can be written as $\min_w \| X - X ww^T\|_2^2$. By rewriting this we obtain: 
 \begin{align*}
@@ -433,7 +453,7 @@ where $x_{ij}$ is the $j$-th variable in $i$-th cluster, $c_{ij}$ is a vector of
 
 The initial choice of cluster centers is random - the algorithm selects $K$ variables from the data as the initial factors. Similarly to k-means the MLCC only finds local maxima of mBIC, therefore many different initialization have to be tried to increase the chance of finding the global one. To estimate the number of clusters one can run MLCC for different values of $K$ and choose the model with the highest value of mBIC as it penalizes dimensionality of the model. More details on this technique can be found in \cite{MLCC}.
 
-\subsection{Supervised methods}
+\subsubsection{Supervised methods}
 
 The common disadvantage of the methods in the previous section is that they are unsupervised, i.e do not use in any way labels associated with samples in our data. In consequence there is no guarantee that the new set of features will be right for the classification task. This is even more evident for microarray data as many gene expression profile can have high variability and be responsible for biological process completely separate from our concern. In this section we present two methods that perform dimensionality reduction in a supervised manner - taking into account the particular prediction task. First of them is called Partial Least Squares (PLS). Primarily it was designed for regression problems and improving the properties of OLS estimator, allowing it to be identifiable in $n \ll p$ setting. Nonetheless, PLS was used with success in the analysis of microarray data for tumor classification (\cite{TumorPLS}). The aim of PLS can be nicely compared with the aim of PCA. Whereas, PCA looks for orthogonal directions that maximizing variance, the PLS finds orthogonal directions that maximize covariance of new features with the response. It can be formulated as:
 \begin{align*}
@@ -457,7 +477,7 @@ where $W_0, W_1, b_0, b_1$ are weights and biases of hidden layers, $W_{out}, b_
 
 
 
-\chapter{Exploratory analysis}
+\section{Exploratory analysis}
 
 In this section we present the results of exploratory analysis. Although preprocessing has already been applied, such analysis should be performed to get a deeper understanding of the data. It involves analyzing main statistical characteristics, study of missing values and outliers, visualization, feature removal and normalization. Due to earlier preprocessing (quantile normalization and RMA introduced in \ref{section:description}), we expect our variables to follow normal distribution. To assess accuracy of this statements we plot values of four common statistics: mean, standard deviation, skewnees and kurtosis. Skewness measures the asymmetry of the distribution and is equal to the third standardized moment, whereas kurtosis corresponds to the heaviness of the tails of the distribution and is equal to fourth standardized moment. High kurtosis indicates heavy tails or outliers when calculated from sample. For normal distribution skewness and kurtosis are $0$ and $3$ respectively. Below are the mathematical formulas for these statistics:
 \begin{align}
@@ -484,7 +504,7 @@ On the figure \ref{fig:stats} we can see that the data is not standardized. The 
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{images/hists_normal.png}
+\includegraphics[width=0.95\textwidth]{images/hists_normal.png}
 \caption{Histograms of randomly chosen genes from the data}
 \label{fig:hists_norm}
 \end{figure}
@@ -535,19 +555,19 @@ Although most variables seem to have correlation close to $0$ we can clearly see
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{images/heatmap.png}
+\includegraphics[width=0.8\textwidth]{images/heatmap.png}
 \caption{Correlation of randomly chosen subset of $50$ genes}
 \label{fig:heatmap}
 \end{figure}
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{images/corrHist.png}
+\includegraphics[width=0.8\textwidth]{images/corrHist.png}
 \caption{Histogram of correlations of features with response}
 \label{fig:corrHist}
 \end{figure}
 
-\chapter{Results}
+\section{Results}
 
 Reduction and selection should be performed within cross validation
 
@@ -558,7 +578,7 @@ Reduction and selection should be performed within cross validation
 \end{itemize}
 
 
-\chapter{Applications in medicine} \label{section:application}
+\section{Applications in medicine} \label{section:application}
 
 \begin{itemize}
     \item What is acceptable in medicine
@@ -567,7 +587,7 @@ Reduction and selection should be performed within cross validation
     \item pathway enrichment
 \end{itemize}
 
-\chapter{Conclusion}
+\section{Conclusion}
 
 \bibliography{biblio}
 \bibliographystyle{plain}
