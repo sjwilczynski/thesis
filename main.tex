@@ -37,7 +37,7 @@
 
 \begin{document}
 
-\chapter{Introduction}
+\chapter{Introduction} \label{section:intro}
 
 \section{Overview}
 One of the major problems of modern medical studies is the prediction of future metastases of breast cancer diagnosed patients. Although metastases are the main cause of death of such subjects and despite the effort in uncovering the underlying mechanism, there was only a minimal improvement in the field in recent years. The main concern is the lack of reliable method to classify inmates to 'poor prognosis' and 'good prognosis' groups. The first one refers to patients that would develop a distant metastasis within five years since first tumor appearance. According to \cite{Metastasis1} the mechanism of distinguishing between these two classes could greatly reduce the number of subjects unnecessarily receiving chemotherapy. Data mining seems to be a great candidate for automating the process of such diagnosis as it could allow to predict the outcome of the disease based on hidden, almost impossible to detect correlations or dependencies within the data. One of the most appealing competitors for highly informative data is the level of gene expression collected from the tumor cells. There are numerous examples of such data proving to be useful in tumor classification (\cite{BreastCancerClassification}, \cite{TumorMolecularClass}, \cite{TumorsClass1}, \cite{TumorClass2}). Unfortunately, the analysis of gene expression can be problematic, due to the number of features (measurements of expressed genes) being much higher than the number of samples (patients), as the extraction of gene expression data is costly. Such relation causes a phenomenon called 'curse of dimensionality' (\cite[p. 22-26]{ESL2}). In order to decrease this effect the dimensionality reduction techniques are often applied (\cite{MasterArts}, \cite{TumorClass4}, \cite{TumorPLS}). Such reduction even allows to use with success one of the most popular and state-of-the-art techniques such as neural networks (\cite{fDNN}), which do not work in the settings where number of features is significantly higher than number of samples. Another important techniques are building a sparse representation (\cite{TumorClass3}) or using strong regularization (\cite[p. 649-666]{ESL2}) in constructed models. However, in scope of prediction of metastases data-mining methods are not so popular. In fact, current research focus mostly on purely biological markers (\cite{Metastasis4}, \cite{dataOrigin}), use prior knowledge based on protein-protein interaction networks (\cite{MetastasisScores}) or operate on very small samples (less than $100$ patients) and utilize only basic classification methods (\cite{Metastasis1}, \cite{Metastasis2}). Such reluctance to adopt more advanced models is usually caused by the requirement of having a model which can be easy to interpret. In terms of gene expression data it refers to being able to highlight the genes having the highest influence on the response. We use a gene expression data set consisting of $969$ patients for whom $12179$ genes expression levels were measured.
@@ -45,7 +45,7 @@ One of the major problems of modern medical studies is the prediction of future 
 In this thesis we present different classification and dimensionality reduction methods, discuss their advantages and weaknesses and apply them to the gene expression data. The main contribution is showing that these techniques could help in providing automatic diagnosis and deciding about potential highly toxic treatment. The code for all the experiments performed in this thesis is available at \url{github.com/sjwilczynski/geneExpr}.  
 
 
-In section \ref{section:bio} we explain the medical notions in the simplified form to make it understandable for a person with very little biological knowledge and explain how our data set was collected and processed. In section \ref{section:methods} we discuss the methods used for classification and dimensionality reduction. In section \ref{section:exploratory} we statistically and graphically inspect our data. In section \ref{section:results} we present the results of our analysis and discuss them. In section \ref{section:application} we consider the medical applications and show how specific requirements in the field implies some tuning of our models.
+In section \ref{section:bio} we explain the medical notions in the simplified form to make it understandable for a person with very little biological knowledge and explain how our data set was collected and processed. In section \ref{section:methods} we discuss the methods used for classification and dimensionality reduction. In section \ref{section:exploratory} we statistically and graphically inspect our data. In section \ref{section:results} we present the results of our analysis together with implementation details and discuss them. In section \ref{section:application} we consider the medical applications and show how specific requirements in the field implies some tuning of our models.
 
 \section{Gene expression data} \label{section:bio}
 
@@ -450,12 +450,20 @@ z_{1} &=f_a\left(W_1z_0+b_1\right) \\
 z_{0} &=f_a\left(W_0x^{\prime} +b_0\right) 
 \end{align*}
 
-where $W_0, W_1, b_0, b_1$ are weights and biases of hidden layers, $W_{out}, b_{out}$ weight and bias of output layer and $f_a$ is an activation function. Graphically the whole model is presented in figure \ref{fig:fDNN}. 
+where $W_0, W_1, b_0, b_1$ are weights and biases of hidden layers, $W_{out}, b_{out}$ weight and bias of output layer and $f_a$ is an activation function. Graphically the whole model is presented in figure \ref{fig:fDNN}. In our implementation $T_i$ can be either a decision tree (Random Forest is used as representation builder) or Logistic Regression using subset of variables (Random Logistic Regression model is used). Also we allow to create representation using probabilities returned by the each small model instead of one hot encoding.
 
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/FDNN.png}
+\caption{Graphical representation of the model}
+\label{fig:fDNN}
+\end{figure}
 
 
 
 \chapter{Exploratory analysis} \label{section:exploratory}
+
+\section{Basic statistics, visualizations and normalization}
 
 In this section we present the results of exploratory analysis. Although preprocessing has already been applied, such analysis should be performed to get a deeper understanding of the data. It involves analyzing main statistical characteristics, study of missing values and outliers, visualization, feature removal and normalization. Due to earlier preprocessing (quantile normalization and RMA introduced in \ref{section:bio}), we expect our variables to follow normal distribution. To assess accuracy of this statements we plot values of four common statistics: mean, standard deviation, skewnees and kurtosis. Skewness measures the asymmetry of the distribution and is equal to the third standardized moment, whereas kurtosis corresponds to the heaviness of the tails of the distribution and is equal to fourth standardized moment. High kurtosis indicates heavy tails or outliers when calculated from sample. For normal distribution skewness and kurtosis are $0$ and $3$ respectively. Below are the mathematical formulas for these statistics:
 \begin{align}
@@ -520,12 +528,14 @@ The compared transformations are:
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{images/normalization_coeffs.png}
+\includegraphics[width=1.1\textwidth]{images/normalization_coeffs.png}
 \caption{Weights of logistic regression with different data transformations}
 \label{fig:normalization}
 \end{figure}
 
 The plots of the weights of these classifiers are presented on figure \ref{fig:normalization}. We can see that the difference between no transformation and truncating extreme values ($4$-th plot in the first column) is very small. It indicates that these genes with very high skewness and kurtosis do not impact our prediction significantly and do not need to be truncated or removed from the data. What is more application of different transformation aiming to normalize our features (plots $4-6$-th in the second column) resulted in similar logistic regression coefficients. Taking into account figure \ref{fig:hists_norm} and \ref{fig:normalization} we conclude that there is no justification of using other transformation of our data set before further analysis. We will only standardize the data before applying dimensionality reduction methods as they are sensitive to features' scales.
+
+\section{Correlation study}
 
 In data mining we usually aim to remove strongly correlated variables from the data, due to the possibility of causing instability in our models (\cite{Correlation}). In case of gene expression data this usually refers to genes which are co-regulated and involved in the same genetic pathway. In order to get notion of such correlation structure we present (figure \ref{fig:heatmap}) the correlation between randomly chosen $50$ genes. 
 
@@ -545,15 +555,65 @@ Although most variables seem to have correlation close to $0$ we can clearly see
 \label{fig:corrHist}
 \end{figure}
 
-\chapter{Results} \label{section:results}
+\chapter{Implementation details and results} \label{section:results}
 
-Reduction and selection should be performed within cross validation
+\section{Implementation}
 
+As mentioned in the section \ref{section:intro} the implementation of all experiments for this thesis can be found at \url{github.com/sjwilczynski/geneExpr}. We chose to use \textit{Python} programming language and \textit{Scikit-learn} library (\cite{sklearn1}, \cite{sklearn2}) as they together provide a wide variety of components and features for implementing machine learning pipelines. Scikit-learn has a few very appealing advantages:
+\begin{enumerate}
+    \item Open-source - code of the library is available at \url{github.com/scikit-learn/scikit-learn}
+    \item Unified learning and inspection API for different models
+    \item Most of the methods mentioned in section \ref{section:methods} are already implemented
+    \item  Possibility of composing a sequence of steps into one classifier 
+\end{enumerate}
+The first point is very important as in case of any problems or ambiguities on how some function or model work one can always check the code and adjust it to one's requirements. The second convenience, the unified API is particularly useful. All models expose \textit{fit} method for learning from given data set. Additionally, all dimensionality reduction or normalization classes expose \textit{transform} method which converts the initial set of features to the new one. Finally, all classifiers expose \textit{predict} method for assigning a new sample to one of the classes and most of them also implement \textit{predict\_proba} which instead of hard assignments provides class membership probabilities. Apart from that, fitted models are easy to inspect as all parameters are available through attributes. Scikit-learn also provides hyperparameter tuning tools which together with unified API make model selection task almost effortless. 
+
+Moreover, we only needed to implement from scratch Random Logistic Regression due to the variety of models available in the library. As for the other adaptations, we use \textit{skorch} package to allow us to exploit powerful neural network library, i.e \textit{PyTorch}(\cite{pytorch}) as a scikit-learn class, \textit{easyspc} python package as a base for SPCA via regularized SVD implementation and R package \textit{varclust} (\cite{varclust}) together with python package \textit{rpy2} to use MLCC from Python. Last but not least, scikit-learn exposes a class \textit{Pipeline} that can be utilized to combine few steps of model fitting, i.e standardization with dimensionality reduction and finally classification. It is especially critical in terms of model and algorithm selection. If we use either normalization or dimensionality reduction both these steps should be performed within cross-validation loop. In the opposite case the information from hold-out fold would leak into training process in the form of features that were extracted using also the hold-out part of the data. It may lead to incredibly biased estimates returned from cross-validation as stated in \cite[chapter 7.10.2]{ESL2} and \cite{dimRedInCV}. Furthermore, hyperparameters for the classifier should be selected together with hyperparamters for corresponding dimensionality reduction method to enhance the performance. Both these issues are resolved by incorporating \textit{Pipeline} class. 
+
+There is one more concern for implementation of hyperparameter tuning - how to search the space of hyperparameter values. There are three main approaches. Usage of manual search can be justified only if the researcher has a prior knowledge on which values are probable to work well. In our case as we are considering lots of different learning algorithms this technique is not suitable. The next one, grid search, is probably the most common method of searching hyperparameter space. For a given model one declares some hyperparameters to optimize, for each of them providing a number of values that should be checked. Then one compares models fitted using every possible combination of the hyperparameters. This technique is very simple, intuitive and reliable when searching through low dimensional space of hyperparameters. However, assume that we want to optimize five different hyperparameters and each of them could be assigned one of $10$ values. This leads to testing $10^5$ distinct models which can be computationally unfeasible. Such constraint would lead to reducing the number of checked values, potentially risking omitting the most valuable ones. We can also notice that if a part of hyperparameters does not influence the model's performance significantly, many of the fitted classifiers will be tested unnecessarily, effectively wasting our time and computational resources. In order to tackle these issues a third way is often used, i.e random search introduced in \cite{randomSearch}. Like for grid search we may specify values to test for each parameter or the distribution from which to sample a value. The first case is treated as uniform discrete distribution. We also declare a number of iterations of random search and in each iteration for each parameter a value is sampled from the corresponding distribution. It turns out that given the same restricted computational time for grid search and random search, the latter yields considerably better results. This is caused by the much higher effectiveness of searching through the parameter space as now unimportant hyperparameters does not cause exponential increase in computation time. What is more, experiments show that in most cases $60$ iterations were enough to obtain values of hyperparameters very close to optimal ones. Taking the above into consideration and the fact that we compare a variety of different models and hyperparameter optimization is performed within inner loop of nested cross-validation, we use random search method (implemented in scikit-learn) and $100$ iterations. Below we list all tuned parameters for each model:
 \begin{itemize}
-    \item Something about code - used libraries, computational power, implementations etc.
-    \item Best models - present ROC curves, adjust errors from ROC, some explanation, comparison with model chosen by recall
-    \item comparison with other papers - e.g. most popular classification based on 76 selected genes
+    \item LR: $L_1$ regularization constant
+    \item Elastic Net: ratio between $L_1$ regularization constant and $L_2$ regularization constant
+    \item RDA: no tunable parameters
+    \item NSC: threshold $\Delta$
+    \item linear SVM: regularization constant $\lambda$
+    \item Random forest: number of decision trees, maximal depth of each tree, minimal number of samples in a leaf, splitting criterion (Gini index or entropy)
+    \item Random Logistic Regression: $L_1$ regularization constant, number of LR models used, number of features randomly chosen for each regression 
+    \item PCA: number of dimensions to keep
+    \item SPCA: number of dimensions to keep, $L_1$ regularization constant, number of iterations of regularizing loop
+    \item MLCC: number of clusters, maximal dimension of each subspace (upper bound for PESEL)
+    \item PLS: number of dimensions to keep
+    \item FDNN: learning rate, dropout rate, sizes of hidden layers, weight decay magnitude, number of simple classifiers for transformer (Random Forest or Random Logistic Regression)
 \end{itemize}
+By default all dimensionality reduction methods are followed by Logistic Regression classifier. 
+
+To mention other libraries extensively used in the thesis, for visualizations we utilize \textit{matplotlib} (\cite{matplotlib}) and its extension, i.e. \textit{seaborn}. Moreover, as some the performed computations can be quite resource demanding we use machines at the Department of Mathematics and Computer Science of the University of Wrocław. In order to do that effectively we use \textit{JupyterLab} - a powerful IDE for Python notebooks allowing nested visualizations and sequential execution of small chunks of code in interactive sessions on remote computer using ssh tunnels and a browser. As many Python packages differ with APIs quite significantly from version to version we created a dedicated \textit{Anaconda} environment and keep its configuration in the file \textit{environment.yaml} in the Github repository. This allows to reproduce the configuration and in consequence results from this thesis on other machines. Finally, as for example running nested cross-validation for all models could take up to few days we utilize \textit{papermill} package that allows to execute Python notebooks with proper parametrization (e.g number of iteration in random search) that could change for different runs without any alternation of the code. All these libraries and frameworks help us perform experiments, visualization, test new models and ideas effectively, as well as keeping the code clean readable and all the results reproducible. 
+
+\section{Classification performance}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lllll}
+\toprule
+{} &            ROC AUC &          Precision &             Recall &                 F1-score \\
+\midrule
+PCA                               &  0.763 $\pm$ 0.022 &  0.637 $\pm$ 0.036 &  0.609 $\pm$ 0.062 &  0.622 $\pm$ 0.048 \\
+SPCA                              &  0.789 $\pm$ 0.033 &  0.665 $\pm$ 0.054 &  0.592 $\pm$ 0.036 &  0.626 $\pm$ 0.041 \\
+MLCC                              &  0.766 $\pm$ 0.041 &  0.637 $\pm$ 0.042 &  0.592 $\pm$ 0.073 &  0.613 $\pm$ 0.056 \\
+PLS                               &  0.804 $\pm$ 0.023 &  0.625 $\pm$ 0.016 &  0.751 $\pm$ 0.035 &  0.682 $\pm$ 0.023 \\
+FDNN                              &  0.490 $\pm$ 0.136 &  0.000 $\pm$ 0.000 &  0.000 $\pm$ 0.000 &  0.000 $\pm$ 0.000 \\
+NSC       &  0.656 $\pm$ 0.045 &  0.576 $\pm$ 0.052 &  0.613 $\pm$ 0.066 &  0.593 $\pm$ 0.054 \\
+LR               &  0.777 $\pm$ 0.022 &  0.654 $\pm$ 0.035 &  0.574 $\pm$ 0.044 &  0.611 $\pm$ 0.037 \\
+RDA &  0.797 $\pm$ 0.019 &  0.673 $\pm$ 0.047 &  0.602 $\pm$ 0.051 &  0.635 $\pm$ 0.045 \\
+Random forest                     &  0.778 $\pm$ 0.038 &  0.694 $\pm$ 0.051 &  0.457 $\pm$ 0.054 &  0.549 $\pm$ 0.044 \\
+Elastic net                       &  0.774 $\pm$ 0.030 &  0.623 $\pm$ 0.067 &  0.565 $\pm$ 0.252 &  0.551 $\pm$ 0.144 \\
+Linear SVM                        &  0.759 $\pm$ 0.025 &  0.644 $\pm$ 0.061 &  0.626 $\pm$ 0.061 &  0.635 $\pm$ 0.061 \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for all models obtained from nested cross-validation procedure}
+    \label{tab:ncv-metrics}
+\end{table}
+
 
 
 \chapter{Applications in medicine} \label{section:application}
@@ -565,7 +625,16 @@ Reduction and selection should be performed within cross validation
     \item pathway enrichment
 \end{itemize}
 
-\chapter{Conclusion} \label{section:summary}
+\chapter{Conclusions} \label{section:summary}
+
+\begin{itemize}
+    \item Lack of usage of advanced methods in present literature and reasons and discussion (this should not be  used as fully individual tool but rather as an advisor) 
+    \item Applications revisited (also in terms of metrics and algorithm/model selection)
+    \item Discussion about cross validation and errors made in some medical papers (\cite{dimRedInCV}) and problems with reproduction of results (ICLR Reproducibility challenge)
+    \item Future work: other nonlinear models, more on variable selection, direct comparison (?) with other methods
+    \item ...
+    
+\end{itemize}
 
 \bibliography{biblio}
 \bibliographystyle{plain}
