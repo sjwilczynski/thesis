@@ -19,26 +19,6 @@
 %     oraz \advisor (w tym przypadku np. do podania kilku promotorow i/lub ich
 %     afiliacji, jesli sa inne niz II UWr)
 %
-%%%   Dwa kolejne polecenia maja znaczenie tylko z opcja 'declaration' i sluza
-%%%   do zadeklarowania napisow pojawiajacych sie w tresci oswiadczenia. Jesli
-%%%   zostana pominiete, w oswiadczeniu pojawia sie wykropkowane miejsca do
-%%%   pisemnego wypelnienia.
-% \transcriptnum - sluzy do zadeklarowania numeru indeksu
-% \advisorgen - sluzy do zadeklarowania nazwiska promotora w dopelniaczu; w
-%     przypadku kilku nazwisk nalezy je oddzielac przecinkami i spojnikami
-%%%   (Wrazliwe dane osobowe, takie jak adresy i nr ewidencyjny PESEL, nie sa
-%%%   podawane w wersji elektronicznej pracy dyplomowej i musza w oswiadczeniu
-%%%   wypelnione pisemnie.)
-%
-%%%%% PRZYKLADY: WIELU AUTOROW/PROMOTOROW, W TYM Z AFILIACJAMI/ADNOTACJAMI
-% \author{Maksymilian Debesciak \and
-%     Karol Sasiedzki \fmlinebreak
-%     WPPT PWr}
-% \advisor{dr Jan Kowalski \and
-%     prof. Janina Nowak \fmlinebreak
-%     Instytut Informatyki \fmlinebreak
-%     Uniwersytet Jagielloński \fmlinebreak
-%     (promotor pomocniczy)}
 %
 %%%%% PAKIETY WYMAGANE I DOLACZANE PRZEZ KLASE
 % babel, geometry, fontenc, hyperref, ifthen, titling

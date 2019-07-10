@@ -213,7 +213,7 @@ We can see regularizing the first, larger coordinate in $l_2$ has results in muc
 
 In terms of linear regression these two methods are called ridge regression and LASSO. There also exists a combination of these two i.e. Elastic Net where the penalty is the linear combination of $L_1$ and $L_2$ regularization. As different models can use such regularization in the further chapters we will refer to them as $L_1, L_2$ and Elastic Net penalties.
 
-\subsection{Regularized Discriminant Analysis and Nearest Shrunken Centroid}
+\subsection{Discriminant Analysis and Nearest Shrunken Centroid}
 
 As stated in \cite[chapter 18.2]{ESL2} there are two good classifiers that can be used as baseline in high dimensional setting. The first one is Regularized Discriminant Analysis (RDA), an extension of Linear Discriminant Analysis (LDA) (\cite[chapter 4.3]{ESL2}). The assumption of LDA is that samples from each class come from multivariate normal distribution with the same covariance matrix $\Sigma$. In terms of two classes it can be written as:
 \begin{align*}
@@ -496,8 +496,8 @@ On the figure \ref{fig:stats} we can see that the data is not standardized. The 
 \end{figure}
 
 
-By looking at the figure \ref{fig:hists_norm} we conclude that also the distribution are visibly skewed and even multimodal they do not indicate that further transformation is needed to able to use models assuming normality. However, we can clearly see form figure \ref{fig:hists_out} that high skewness or kurtosis can be caused by outlying values for this variable. In order to verify this we calculate the 95\% quantile for both skewness and kurtosis. They are equal to $2.15$ and $9.77$ respectively. It indicates that only very few genes have statistics indicating strong non normality. What is more, the number of genes with kurtosis or skewness above 95\% quantile is $710$ which is not significantly larger than the number of genes with high kurtosis only. This indicates that the extreme values of either of these statistics appear on the small subset of genes. In order to assess the influence of such genes we consider following data sets: data set consisting of genes only with values of skewness and kurtosis below the 95\% quantile ($D_1$), the complement of the previous data set ($D_2$), $50$ data sets extracted by randomly choosing $710$ variables from the original data ($D_{random}$). We split each of them to train and test parts and fit logistic regression with L1 penalty and regularization hyperparameter chosen using cross validation as described in section \ref{section:selection}. We compare the scores on the test set to check how these genes with outlying values impact our prediction. For the random data sets we fit the model for each of them and take the mean scores. The results are presented in the table \ref{tab:scores-trunc}: 
-\begin{table}[H]
+By looking at the figure \ref{fig:hists_norm} we conclude that also the distribution are visibly skewed and even multimodal they do not indicate that further transformation is needed to able to use models assuming normality. However, we can clearly see form figure \ref{fig:hists_out} that high skewness or kurtosis can be caused by outlying values for this variable. In order to verify this we calculate the 95\% quantile for both skewness and kurtosis. They are equal to $2.15$ and $9.77$ respectively. It indicates that only very few genes have statistics indicating strong non normality. What is more, the number of genes with kurtosis or skewness above 95\% quantile is $710$ which is not significantly larger than the number of genes with high kurtosis only. This indicates that the extreme values of either of these statistics appear on the small subset of genes. In order to assess the influence of such genes we consider following data sets: data set consisting of genes only with values of skewness and kurtosis below the 95\% quantile ($D_1$), the complement of the previous data set ($D_2$), $50$ data sets extracted by randomly choosing $710$ variables from the original data ($D_{random}$). We split each of them to train and test parts and fit logistic regression with L1 penalty and regularization hyperparameter chosen using cross validation as described in section \ref{section:selection}. We compare the scores on the test set to check how these genes with outlying values impact our prediction. For the random data sets we fit the model for each of them and take the mean scores. The results are presented in the table \ref{tab:scores-trunc}.
+\begin{table}
 \centering
     \begin{tabular}[t]{c c c c c}
     \toprule
@@ -591,32 +591,51 @@ To mention other libraries extensively used in the thesis, for visualizations we
 
 \section{Classification performance}
 
-\begin{table}[H]
+In table \ref{tab:ncv-metrics} we present the result of nested cross-validation for all models. The values in the table are means of the metrics from the outer loop and after $\pm$ standard deviation is reported. We can see that the performance of most models is quite similar. However, PLS seems to be the best model having highest mean ROC AUC score with modest standard deviation and highest mean F1-score. On the other hand, methods that performed poorly are NSC, LR and SVC. It may indicate that these models are not suitable for our problem, for example independence assumption in NSC is too much of a simplification. Nonetheless, in the section \ref{section:exploratory} we observed that LR could perform nicely. Also we noticed that for both SVC and LR inner loop of nested cross-validation reported that weights in many cases did not converge, possibly due to the too small amount of samples for training, resulting in pessimistic bias as mentioned in \ref{section:selection}. Therefore, for final tuning and assessment we choose PLS with LR as classifier and SVC. We use standard cross-validation procedure on training set to select good hyperparameters for both models. The procedure returned $150$ as the number of dimensions to keep for PLS and $C=0.945$ as value of inverse of regularization constant for $L_1$ regularized LR classifier following PLS. For SVC, $C=0.0341$ as value of inverse of regularization constant was picked resulting in expected strong regularization for method without any dimensionality reduction.
+
+\begin{table}
 \centering
 \begin{tabular}{lllll}
 \toprule
-{} &            ROC AUC &          Precision &             Recall &                 F1-score \\
+{} &            ROC AUC &          Precision &             Recall &                 F1 \\
 \midrule
-PCA                               &  0.763 $\pm$ 0.022 &  0.637 $\pm$ 0.036 &  0.609 $\pm$ 0.062 &  0.622 $\pm$ 0.048 \\
-SPCA                              &  0.789 $\pm$ 0.033 &  0.665 $\pm$ 0.054 &  0.592 $\pm$ 0.036 &  0.626 $\pm$ 0.041 \\
-MLCC                              &  0.766 $\pm$ 0.041 &  0.637 $\pm$ 0.042 &  0.592 $\pm$ 0.073 &  0.613 $\pm$ 0.056 \\
-PLS                               &  0.804 $\pm$ 0.023 &  0.625 $\pm$ 0.016 &  0.751 $\pm$ 0.035 &  0.682 $\pm$ 0.023 \\
-FDNN                              &  0.490 $\pm$ 0.136 &  0.000 $\pm$ 0.000 &  0.000 $\pm$ 0.000 &  0.000 $\pm$ 0.000 \\
-NSC       &  0.656 $\pm$ 0.045 &  0.576 $\pm$ 0.052 &  0.613 $\pm$ 0.066 &  0.593 $\pm$ 0.054 \\
-LR               &  0.777 $\pm$ 0.022 &  0.654 $\pm$ 0.035 &  0.574 $\pm$ 0.044 &  0.611 $\pm$ 0.037 \\
+PCA                               &  0.793 $\pm$ 0.032 &  0.669 $\pm$ 0.042 &  0.644 $\pm$ 0.067 &  0.655 $\pm$ 0.052 \\
+SPCA                              &  0.797 $\pm$ 0.030 &  0.700 $\pm$ 0.066 &  0.637 $\pm$ 0.034 &  0.667 $\pm$ 0.047 \\
+MLCC                              &  0.787 $\pm$ 0.027 &  0.658 $\pm$ 0.037 &  0.619 $\pm$ 0.030 &  0.637 $\pm$ 0.024 \\
+PLS                               &  0.804 $\pm$ 0.024 &  0.630 $\pm$ 0.020 &  0.754 $\pm$ 0.038 &  0.686 $\pm$ 0.027 \\
+FDNN                              &  0.798 $\pm$ 0.032 &  0.482 $\pm$ 0.251 &  0.622 $\pm$ 0.312 &  0.541 $\pm$ 0.274 \\
+NSC       &  0.669 $\pm$ 0.048 &  0.589 $\pm$ 0.055 &  0.630 $\pm$ 0.068 &  0.607 $\pm$ 0.056 \\
+LR               &  0.777 $\pm$ 0.020 &  0.673 $\pm$ 0.045 &  0.578 $\pm$ 0.050 &  0.622 $\pm$ 0.047 \\
 RDA &  0.797 $\pm$ 0.019 &  0.673 $\pm$ 0.047 &  0.602 $\pm$ 0.051 &  0.635 $\pm$ 0.045 \\
-Random forest                     &  0.778 $\pm$ 0.038 &  0.694 $\pm$ 0.051 &  0.457 $\pm$ 0.054 &  0.549 $\pm$ 0.044 \\
-Elastic net                       &  0.774 $\pm$ 0.030 &  0.623 $\pm$ 0.067 &  0.565 $\pm$ 0.252 &  0.551 $\pm$ 0.144 \\
-Linear SVM                        &  0.759 $\pm$ 0.025 &  0.644 $\pm$ 0.061 &  0.626 $\pm$ 0.061 &  0.635 $\pm$ 0.061 \\
+Random forest                     &  0.797 $\pm$ 0.032 &  0.737 $\pm$ 0.045 &  0.533 $\pm$ 0.036 &  0.617 $\pm$ 0.028 \\
+Elastic net                       &  0.791 $\pm$ 0.031 &  0.703 $\pm$ 0.179 &  0.551 $\pm$ 0.292 &  0.519 $\pm$ 0.194 \\
+SVC                        &  0.766 $\pm$ 0.028 &  0.661 $\pm$ 0.050 &  0.547 $\pm$ 0.023 &  0.598 $\pm$ 0.033 \\
 \bottomrule
 \end{tabular}
 \caption{Metrics for all models obtained from nested cross-validation procedure}
     \label{tab:ncv-metrics}
 \end{table}
 
+The ROC curves on the test set for both models are displayed in figure \ref{fig:rocTest}. The ROC AUC scores on test set are $0.818$ and $0.831$ for PLS and SVC respectively indicating that the pessimistic bias resulting from limited number of samples in the inner loop of nested cross-validation was quite significant. On the third plot the two curves are presented together. It shows that the performance of these two methods is very similar. For further diagnosis in figure \ref{fig:thresholds} we demonstrate a precision and recall vs decision thresholds.
+
+\begin{figure}
+\centering
+\includegraphics[width=1.05\textwidth]{images/rocTest.png}
+\caption{ROC curves for PLS and SVM}
+\label{fig:rocTest}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1.05\textwidth]{images/PRvsThresh.png}
+\caption{Precision and Recall vs decision threshold for PLS and SVM}
+\label{fig:thresholds}
+\end{figure}
+
+The values on horizontal axis for SVC are not in range $[0, 1]$ as the classifier does not return probabilities but scores representing distances from margins. We can see that these two plots are notably different. For PLS recall decreases (precision increases) quite slowly in the interval $[0.15, 0.85]$ whereas for SVC both recall and precision seem to change linearly for the whole range of decision thresholds. As mentioned in the section \ref{section:selection}, in case of diagnosis tool false negatives are much more costly than false positives. The most crucial questions remains: what will be the obtained precision if we would like to have classifier with recall at level $r$. For $r=0.95$ the values of precision are $0.556$ and $0.516$ for PLS and SVC respectively. For $r=0.8$ these values change to $0.596$ and $0.689$. This suggests that SVC offers a little better precision-recall tradeoff but for the standard reference value of $0.95$ PLS is better. Nonetheless, these precision values are too small for the model to be independent diagnostic tool, limiting its usability to being a support medium for doctors. 
 
 
-\chapter{Applications in medicine} \label{section:application}
+\section{Feature selection} \label{section:application}
 
 \begin{itemize}
     \item What is acceptable in medicine
